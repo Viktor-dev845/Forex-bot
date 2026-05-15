@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-01-13T12:10:42.382499",
+  "market_type": "synthetics",
+  "symbols": [
+    "Volatility 75 Index",
+    "Crash 500 Index",
+    "Boom 1000 Index"
+  ],
+  "account": {
+    "cash": 0.0,
+    "equity": 0.0,
+    "return_pct": 0.0,
+    "buying_power": 0.0,
+    "daily_pnl": 0.0
+  },
+  "positions": [],
+  "trade_history": [],
+  "predictions": {
+    "Volatility 75 Index": {
+      "prob": 0.9103438258171082,
+      "signal": "UP",
+      "timestamp": "2026-01-13T12:10:41.634621",
+      "ensemble": {
+        "xgboost": 0.9103438258171082
+      }
+    },
+    "Crash 500 Index": {
+      "prob": 0.7777764201164246,
+      "signal": "UP",
+      "timestamp": "2026-01-13T12:10:41.826306",
+      "ensemble": {
+        "xgboost": 0.7777764201164246
+      }
+    },
+    "Boom 1000 Index": {
+      "prob": 0.1658981889486313,
+      "signal": "DOWN",
+      "timestamp": "2026-01-13T12:10:41.994868",
+      "ensemble": {
+        "xgboost": 0.1658981889486313
+      }
+    }
+  },
+  "latest_logs": []
+}

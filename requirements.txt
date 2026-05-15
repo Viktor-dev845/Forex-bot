@@ -1,0 +1,14 @@
+yfinance
+pandas
+numpy
+scikit-learn
+joblib
+deriv-api
+websockets>=12.0
+plotly
+torch
+xgboost
+ta
+deriv_api
+python-dotenv
+MetaTrader5
