@@ -1,0 +1,690 @@
+{
+  "timestamp": "2026-05-05T16:00:27.128365",
+  "market_type": "synthetics",
+  "symbols": [
+    "Volatility 75 Index",
+    "Crash 500 Index",
+    "Boom 1000 Index"
+  ],
+  "account": {
+    "cash": 89.52681878233324,
+    "equity": 100.0,
+    "return_pct": 0,
+    "buying_power": 44763.40939116662,
+    "daily_pnl": 11.353073542235691
+  },
+  "positions": [
+    {
+      "symbol": "Crash 500 Index",
+      "qty": 0.6530556079292824,
+      "side": "long",
+      "sl_price": 3072.5152104917643,
+      "tp_price": 3090.890368524707,
+      "entry_price": 3077.109,
+      "unrealized_pl": -2009.5232886596662
+    },
+    {
+      "symbol": "Boom 1000 Index",
+      "qty": 0.22549137823881818,
+      "side": "short",
+      "sl_price": 14324.571278076755,
+      "tp_price": 14271.354165769735,
+      "entry_price": 14311.267,
+      "unrealized_pl": -3227.067320173717
+    }
+  ],
+  "trade_history": [
+    {
+      "id": 207,
+      "timestamp": "2026-05-05T16:00:24.627916",
+      "symbol": "Boom 1000 Index",
+      "side": "SELL",
+      "quantity": 0.22549137823881818,
+      "price": 14311.267,
+      "order_id": "PAPER-2",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 14324.5713, TP: 14271.3542",
+      "strategy": "AI"
+    },
+    {
+      "id": 206,
+      "timestamp": "2026-05-05T16:00:21.386030",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.6530556079292824,
+      "price": 3077.109,
+      "order_id": "PAPER-1",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3072.5152, TP: 3090.8904",
+      "strategy": "AI"
+    },
+    {
+      "id": 205,
+      "timestamp": "2026-05-05T15:15:13.938128",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.013617342757655188,
+      "price": 37423.1514,
+      "order_id": "PAPER-21",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 36674.6884, TP: 38920.0775",
+      "strategy": "AI"
+    },
+    {
+      "id": 204,
+      "timestamp": "2026-05-05T15:15:11.112529",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.5514585716878342,
+      "price": 3074.048,
+      "order_id": "PAPER-20",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3068.5530, TP: 3090.5330",
+      "strategy": "AI"
+    },
+    {
+      "id": 203,
+      "timestamp": "2026-05-05T15:12:18.953111",
+      "symbol": "Crash 500 Index",
+      "side": "CLOSE",
+      "quantity": 0.5883821207079768,
+      "price": 3076.48,
+      "order_id": "PAPER-19",
+      "pnl": -1.6645330194829713,
+      "notes": "Emergency Exit: TRAILING STOP HIT @ 3076.4800 (Stop: 3079.3090)",
+      "strategy": "AI"
+    },
+    {
+      "id": 202,
+      "timestamp": "2026-05-05T15:05:15.123923",
+      "symbol": "Boom 1000 Index",
+      "side": "SELL",
+      "quantity": 0.22850058732861098,
+      "price": 14284.905,
+      "order_id": "PAPER-18",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 14298.0341, TP: 14245.5178",
+      "strategy": "AI"
+    },
+    {
+      "id": 201,
+      "timestamp": "2026-05-05T15:05:10.881995",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.5883821207079768,
+      "price": 3079.309,
+      "order_id": "PAPER-17",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3074.2103, TP: 3094.6052",
+      "strategy": "AI"
+    },
+    {
+      "id": 200,
+      "timestamp": "2026-05-05T15:00:12.502449",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.013331755031294332,
+      "price": 37656.326,
+      "order_id": "PAPER-16",
+      "pnl": -2.0249136105606937,
+      "notes": "PnL: -2.02 | SL_COOLDOWN",
+      "strategy": "AI"
+    },
+    {
+      "id": 199,
+      "timestamp": "2026-05-05T15:00:09.758728",
+      "symbol": "Boom 1000 Index",
+      "side": "CLOSE",
+      "quantity": 0.2610623554323603,
+      "price": 14263.7,
+      "order_id": "PAPER-15",
+      "pnl": 1.129355749600159,
+      "notes": "PnL: 1.13",
+      "strategy": "AI"
+    },
+    {
+      "id": 198,
+      "timestamp": "2026-05-05T14:55:16.784039",
+      "symbol": "Volatility 75 Index",
+      "side": "SELL",
+      "quantity": 0.013331755031294332,
+      "price": 37504.4395,
+      "order_id": "PAPER-14",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 38254.5283, TP: 36004.2619",
+      "strategy": "AI"
+    },
+    {
+      "id": 197,
+      "timestamp": "2026-05-05T14:55:14.037377",
+      "symbol": "Boom 1000 Index",
+      "side": "SELL",
+      "quantity": 0.2610623554323603,
+      "price": 14268.026,
+      "order_id": "PAPER-13",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 14279.5175, TP: 14233.5515",
+      "strategy": "AI"
+    },
+    {
+      "id": 196,
+      "timestamp": "2026-05-05T14:55:11.010394",
+      "symbol": "Crash 500 Index",
+      "side": "CLOSE",
+      "quantity": 0.4687866410375419,
+      "price": 3077.573,
+      "order_id": "PAPER-12",
+      "pnl": 3.4296430658305646,
+      "notes": "PnL: 3.43",
+      "strategy": "AI"
+    },
+    {
+      "id": 195,
+      "timestamp": "2026-05-05T14:50:15.165767",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.015042049124201467,
+      "price": 37535.4143,
+      "order_id": "PAPER-11",
+      "pnl": 0.017199078968624566,
+      "notes": "PnL: 0.02",
+      "strategy": "AI"
+    },
+    {
+      "id": 194,
+      "timestamp": "2026-05-05T14:50:12.579574",
+      "symbol": "Boom 1000 Index",
+      "side": "CLOSE",
+      "quantity": 0.2356421040687628,
+      "price": 14272.216,
+      "order_id": "PAPER-10",
+      "pnl": 1.987641147819894,
+      "notes": "PnL: 1.99",
+      "strategy": "AI"
+    },
+    {
+      "id": 193,
+      "timestamp": "2026-05-05T14:50:09.257784",
+      "symbol": "Volatility 75 Index",
+      "side": "SELL",
+      "quantity": 0.015042049124201467,
+      "price": 37536.5577,
+      "order_id": "PAPER-9",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 37741.2604, TP: 36922.4497",
+      "strategy": "AI"
+    },
+    {
+      "id": 192,
+      "timestamp": "2026-05-05T14:40:09.971203",
+      "symbol": "Boom 1000 Index",
+      "side": "SELL",
+      "quantity": 0.2356421040687628,
+      "price": 14280.651,
+      "order_id": "PAPER-8",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 14293.4864, TP: 14242.1449",
+      "strategy": "AI"
+    },
+    {
+      "id": 191,
+      "timestamp": "2026-05-05T14:36:36.763964",
+      "symbol": "Boom 1000 Index",
+      "side": "CLOSE",
+      "quantity": 0.10475680507090747,
+      "price": 14246.128,
+      "order_id": "PAPER-7",
+      "pnl": -0.1074804820027343,
+      "notes": "Emergency Exit: TRAILING STOP HIT @ 14246.1280 (Stop: 14247.1540)",
+      "strategy": "AI"
+    },
+    {
+      "id": 190,
+      "timestamp": "2026-05-05T14:35:18.474348",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.014287581745495824,
+      "price": 37239.9227,
+      "order_id": "PAPER-6",
+      "pnl": -0.22618813537116267,
+      "notes": "PnL: -0.23 | SL_COOLDOWN",
+      "strategy": "AI"
+    },
+    {
+      "id": 189,
+      "timestamp": "2026-05-05T14:35:15.859372",
+      "symbol": "Boom 1000 Index",
+      "side": "BUY",
+      "quantity": 0.10475680507090747,
+      "price": 14247.154,
+      "order_id": "PAPER-5",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 14237.7035, TP: 14275.5054",
+      "strategy": "AI"
+    },
+    {
+      "id": 188,
+      "timestamp": "2026-05-05T14:35:12.977214",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.4687866410375419,
+      "price": 3070.257,
+      "order_id": "PAPER-4",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3063.8575, TP: 3089.4555",
+      "strategy": "AI"
+    },
+    {
+      "id": 187,
+      "timestamp": "2026-05-05T14:35:09.894026",
+      "symbol": "Volatility 75 Index",
+      "side": "SELL",
+      "quantity": 0.014287581745495824,
+      "price": 37224.0916,
+      "order_id": "PAPER-3",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 37434.0642, TP: 36594.1739",
+      "strategy": "AI"
+    },
+    {
+      "id": 186,
+      "timestamp": "2026-05-05T14:33:33.826299",
+      "symbol": "Crash 500 Index",
+      "side": "CLOSE",
+      "quantity": 0.5195994345814157,
+      "price": 3073.557,
+      "order_id": "PAPER-2",
+      "pnl": -1.2371662537385133,
+      "notes": "Emergency Exit: TRAILING STOP HIT @ 3073.5570 (Stop: 3075.9380)",
+      "strategy": "AI"
+    },
+    {
+      "id": 185,
+      "timestamp": "2026-05-05T14:32:07.895653",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.5195994345814157,
+      "price": 3075.938,
+      "order_id": "PAPER-1",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3070.1643, TP: 3093.2590",
+      "strategy": "AI"
+    },
+    {
+      "id": 184,
+      "timestamp": "2026-05-05T11:15:14.242750",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.013711087912046427,
+      "price": 36695.1652,
+      "order_id": "PAPER-9",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 35961.2619, TP: 38162.9718",
+      "strategy": "AI"
+    },
+    {
+      "id": 183,
+      "timestamp": "2026-05-05T11:15:10.567888",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.013659011377551569,
+      "price": 36720.516,
+      "order_id": "PAPER-8",
+      "pnl": 0.04968875158931259,
+      "notes": "PnL: 0.05",
+      "strategy": "AI"
+    },
+    {
+      "id": 182,
+      "timestamp": "2026-05-05T11:10:16.612116",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.013659011377551569,
+      "price": 36716.8782,
+      "order_id": "PAPER-7",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 35982.5406, TP: 38185.5533",
+      "strategy": "AI"
+    },
+    {
+      "id": 181,
+      "timestamp": "2026-05-05T11:10:13.727969",
+      "symbol": "Boom 1000 Index",
+      "side": "BUY",
+      "quantity": 0.22563781684667333,
+      "price": 14238.312,
+      "order_id": "PAPER-6",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 14224.9760, TP: 14278.3199",
+      "strategy": "AI"
+    },
+    {
+      "id": 180,
+      "timestamp": "2026-05-05T11:10:10.052714",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.01363537968257407,
+      "price": 36743.2976,
+      "order_id": "PAPER-5",
+      "pnl": 1.0088135658152504,
+      "notes": "PnL: 1.01",
+      "strategy": "AI"
+    },
+    {
+      "id": 179,
+      "timestamp": "2026-05-05T11:05:14.812478",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.01363537968257407,
+      "price": 36669.3126,
+      "order_id": "PAPER-4",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 35935.9263, TP: 38136.0851",
+      "strategy": "AI"
+    },
+    {
+      "id": 178,
+      "timestamp": "2026-05-05T11:05:11.617324",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.7414460058560765,
+      "price": 3106.453,
+      "order_id": "PAPER-3",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3102.4069, TP: 3118.5914",
+      "strategy": "AI"
+    },
+    {
+      "id": 177,
+      "timestamp": "2026-05-05T11:04:06.516937",
+      "symbol": "Crash 500 Index",
+      "side": "CLOSE",
+      "quantity": 0.7862694478886284,
+      "price": 3106.085,
+      "order_id": "PAPER-2",
+      "pnl": -3.114413283086688,
+      "notes": "Emergency Exit: STOP-LOSS HIT @ 3106.0850 (SL: 3106.2305)",
+      "strategy": "AI"
+    },
+    {
+      "id": 176,
+      "timestamp": "2026-05-05T11:00:01.033383",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.7862694478886284,
+      "price": 3110.046,
+      "order_id": "PAPER-1",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3106.2305, TP: 3121.4925",
+      "strategy": "AI"
+    },
+    {
+      "id": 175,
+      "timestamp": "2026-05-05T10:55:14.427461",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.013594345343962732,
+      "price": 36779.9984,
+      "order_id": "PAPER-22",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 36044.3984, TP: 38251.1983",
+      "strategy": "AI"
+    },
+    {
+      "id": 174,
+      "timestamp": "2026-05-05T10:55:13.718660",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.013594345343962779,
+      "price": 36779.9984,
+      "order_id": "PAPER-20",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 36044.3984, TP: 38251.1983",
+      "strategy": "AI"
+    },
+    {
+      "id": 173,
+      "timestamp": "2026-05-05T10:55:11.368343",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.7645664203094139,
+      "price": 3108.231,
+      "order_id": "PAPER-21",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3104.3072, TP: 3120.0024",
+      "strategy": "AI"
+    },
+    {
+      "id": 172,
+      "timestamp": "2026-05-05T10:55:10.343009",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.7645664203094139,
+      "price": 3108.239,
+      "order_id": "PAPER-19",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3104.3152, TP: 3120.0104",
+      "strategy": "AI"
+    },
+    {
+      "id": 171,
+      "timestamp": "2026-05-05T10:50:10.866175",
+      "symbol": "Crash 500 Index",
+      "side": "CLOSE",
+      "quantity": 0.6823746504399787,
+      "price": 3108.922,
+      "order_id": "PAPER-18",
+      "pnl": 3.5722312950533754,
+      "notes": "PnL: 3.57",
+      "strategy": "AI"
+    },
+    {
+      "id": 170,
+      "timestamp": "2026-05-05T10:50:10.473998",
+      "symbol": "Crash 500 Index",
+      "side": "CLOSE",
+      "quantity": 0.6823746504399787,
+      "price": 3108.916,
+      "order_id": "PAPER-20",
+      "pnl": 3.568819421801101,
+      "notes": "PnL: 3.57",
+      "strategy": "AI"
+    },
+    {
+      "id": 169,
+      "timestamp": "2026-05-05T10:40:09.443490",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.01374863061652471,
+      "price": 36551.5329,
+      "order_id": "PAPER-19",
+      "pnl": -0.5712803496517265,
+      "notes": "PnL: -0.57 | SL_COOLDOWN",
+      "strategy": "AI"
+    },
+    {
+      "id": 168,
+      "timestamp": "2026-05-05T10:40:09.312622",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.013748357261592955,
+      "price": 36551.5329,
+      "order_id": "PAPER-17",
+      "pnl": -0.5983312576959643,
+      "notes": "PnL: -0.60 | SL_COOLDOWN",
+      "strategy": "AI"
+    },
+    {
+      "id": 167,
+      "timestamp": "2026-05-05T10:35:12.369538",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.013748357261592955,
+      "price": 36595.0531,
+      "order_id": "PAPER-16",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 35863.1520, TP: 38058.8552",
+      "strategy": "AI"
+    },
+    {
+      "id": 166,
+      "timestamp": "2026-05-05T10:35:10.731974",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.01374863061652471,
+      "price": 36593.0847,
+      "order_id": "PAPER-18",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 35861.2230, TP: 38056.8081",
+      "strategy": "AI"
+    },
+    {
+      "id": 165,
+      "timestamp": "2026-05-05T10:25:11.845919",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.6823746504399787,
+      "price": 3103.687,
+      "order_id": "PAPER-15",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3099.2906, TP: 3116.8762",
+      "strategy": "AI"
+    },
+    {
+      "id": 164,
+      "timestamp": "2026-05-05T10:25:10.304000",
+      "symbol": "Crash 500 Index",
+      "side": "BUY",
+      "quantity": 0.6823746504399787,
+      "price": 3103.686,
+      "order_id": "PAPER-17",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 3099.2896, TP: 3116.8752",
+      "strategy": "AI"
+    },
+    {
+      "id": 163,
+      "timestamp": "2026-05-05T10:23:44.206907",
+      "symbol": "Crash 500 Index",
+      "side": "CLOSE",
+      "quantity": 0.7626241032933565,
+      "price": 3103.153,
+      "order_id": "PAPER-14",
+      "pnl": -3.4623134289521578,
+      "notes": "Emergency Exit: STOP-LOSS HIT @ 3103.1530 (SL: 3103.7592)",
+      "strategy": "AI"
+    },
+    {
+      "id": 162,
+      "timestamp": "2026-05-05T10:23:44.205894",
+      "symbol": "Crash 500 Index",
+      "side": "CLOSE",
+      "quantity": 0.7901487403048718,
+      "price": 3103.153,
+      "order_id": "PAPER-16",
+      "pnl": -3.3952691370900543,
+      "notes": "Emergency Exit: STOP-LOSS HIT @ 3103.1530 (SL: 3103.6532)",
+      "strategy": "AI"
+    },
+    {
+      "id": 161,
+      "timestamp": "2026-05-05T10:20:11.040513",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.014016503999208814,
+      "price": 36751.5208,
+      "order_id": "PAPER-15",
+      "pnl": -0.039066799946578655,
+      "notes": "PnL: -0.04 | SL_COOLDOWN",
+      "strategy": "AI"
+    },
+    {
+      "id": 160,
+      "timestamp": "2026-05-05T10:20:09.908876",
+      "symbol": "Volatility 75 Index",
+      "side": "CLOSE",
+      "quantity": 0.013977956341400283,
+      "price": 36751.5208,
+      "order_id": "PAPER-13",
+      "pnl": -0.03895935991473476,
+      "notes": "PnL: -0.04 | SL_COOLDOWN",
+      "strategy": "AI"
+    },
+    {
+      "id": 159,
+      "timestamp": "2026-05-05T10:17:28.740317",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.013977956341400283,
+      "price": 36754.308,
+      "order_id": "PAPER-12",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 36019.2218, TP: 38224.4803",
+      "strategy": "AI"
+    },
+    {
+      "id": 158,
+      "timestamp": "2026-05-05T10:17:28.377917",
+      "symbol": "Volatility 75 Index",
+      "side": "BUY",
+      "quantity": 0.014016503999208814,
+      "price": 36754.308,
+      "order_id": "PAPER-14",
+      "pnl": null,
+      "notes": "AI_ENTRY | Confirmed | SL: 36019.2218, TP: 38224.4803",
+      "strategy": "AI"
+    }
+  ],
+  "predictions": {
+    "Volatility 75 Index": {
+      "prob": 0.30357035994529724,
+      "signal": "DOWN",
+      "timestamp": "2026-05-05T16:00:20.979387",
+      "ensemble": {
+        "lstm": 3.4882678532701015e-87,
+        "xgboost": 0.6071407198905945
+      }
+    },
+    "Crash 500 Index": {
+      "prob": 0.9145217537879944,
+      "signal": "UP",
+      "timestamp": "2026-05-05T16:00:21.382066",
+      "ensemble": {
+        "lstm": 1.0,
+        "xgboost": 0.8290435075759888
+      }
+    },
+    "Boom 1000 Index": {
+      "prob": 0.08516240983094321,
+      "signal": "DOWN",
+      "timestamp": "2026-05-05T16:00:24.624340",
+      "ensemble": {
+        "lstm": 0.003033163525373655,
+        "xgboost": 0.16729165613651276
+      }
+    }
+  },
+  "sl_cooldown": {
+    "Volatility 75 Index": 0,
+    "Crash 500 Index": 0,
+    "Boom 1000 Index": 0
+  },
+  "trailing_stops": {
+    "Volatility 75 Index": {
+      "best_price": 37482.6829,
+      "trailing_active": false,
+      "stop_level": 38254.52829
+    },
+    "Boom 1000 Index": {
+      "best_price": 14311.267,
+      "trailing_active": false,
+      "stop_level": 14324.571278076755
+    },
+    "Crash 500 Index": {
+      "best_price": 3077.109,
+      "trailing_active": false,
+      "stop_level": 3072.5152104917643
+    }
+  },
+  "latest_logs": []
+}

@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Carbon-Pro Maximum Contrast Palette */
+    --bg-base: #0D0F12;
+    --bg-surface: #161B22;
+    --bg-elevated: #21262D;
+
+    --border: #30363D;
+    --border-accent: #58A6FF;
+
+    --text-primary: #FFFFFF;   /* Pure White */
+    --text-secondary: #E0E0E0; /* Very Light Gray */
+    --text-muted: #A0A0A0;     /* Clear Light Gray */
+
+    --brand-primary: #39D353;
+    --brand-secondary: #58A6FF;
+    
+    --profit: #39D353;
+    --loss: #F85149;
+    --warning: #D29922;
+  }
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Pro-Terminal Panel ── */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; /* Sharper, more professional corners */
+}
+
+/* ── Sidebar Link ── */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.nav-link.active {
+  background: var(--bg-elevated);
+  color: var(--brand-primary);
+  border-left: 2px solid var(--brand-primary);
+  border-radius: 0 6px 6px 0;
+}
+
+/* ── Custom Scrollbar (Stealth) ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+/* ── Ticker / Mono Helper ── */
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ── Status Glow ── */
+.glow-green { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
+.glow-red { box-shadow: 0 0 15px rgba(255, 59, 48, 0.2); }

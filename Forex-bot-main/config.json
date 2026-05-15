@@ -1,0 +1,48 @@
+{
+    "bot": {
+        "market_type": "synthetics",
+        "paper_trading": true,
+        "initial_capital": 100,
+        "trading_interval_seconds": 60,
+        "seq_length": 30
+    },
+    "markets": {
+        "synthetics": {
+            "symbols": [
+                "Volatility 75 Index"
+            ]
+        }
+    },
+    "risk": {
+        "max_daily_loss_pct": 0.10,
+        "stop_loss_pct": 0.02,
+        "take_profit_pct": 0.04,
+        "max_open_positions": 1,
+        "min_confidence": 0.60,
+        "forex_risk": {
+            "risk_per_trade_pct": 0.015,
+            "stop_loss_atr_multiplier": 2.0,
+            "risk_reward_ratio": 2.5
+        }
+    },
+    "model": {
+        "strategy": "ensemble",
+        "type": "ensemble"
+    },
+    "alerts": {
+        "email_enabled": false
+    },
+    "websocket": {
+        "enabled": true
+    },
+    "brokers": {
+        "mt5": {
+            "enabled": false
+        },
+        "deriv": {
+            "enabled": true,
+            "server": "demo",
+            "api_token": "LOADED_FROM_ENV"
+        }
+    }
+}
