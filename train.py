@@ -18,7 +18,7 @@ from models.lstm_model import TradingLSTM, create_sequences
 from feature_engine import FeatureEngine
 
 
-def train_model(ticker="R_75", seq_length=30, epochs=20, batch_size=32, learning_rate=0.001):
+def train_model(ticker="R_75", seq_length=30, epochs=100, batch_size=32, learning_rate=0.001):
     """
     Complete training pipeline with local data and fine-tuning.
     """
@@ -82,9 +82,9 @@ def train_model(ticker="R_75", seq_length=30, epochs=20, batch_size=32, learning
     
     # Tensors
     X_train_t = torch.FloatTensor(X_train)
-    y_train_t = torch.FloatTensor(y_train).unsqueeze(1)
+    y_train_t = torch.FloatTensor(y_train)
     X_test_t = torch.FloatTensor(X_test)
-    y_test_t = torch.FloatTensor(y_test).unsqueeze(1)
+    y_test_t = torch.FloatTensor(y_test)
 
     train_dataset = TensorDataset(X_train_t, y_train_t)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -92,7 +92,7 @@ def train_model(ticker="R_75", seq_length=30, epochs=20, batch_size=32, learning
     # Step 4: Initialize or Load Model
     print("\n[4/5] Initializing model...")
     input_size = X_train.shape[2]
-    model = TradingLSTM(input_size=input_size, hidden_size=64, num_layers=2, output_size=1) # Output size is 1 (predicting 'Close')
+    model = TradingLSTM(input_size=input_size, hidden_size=32, num_layers=2, output_size=1) # Output size is 1 (predicting 'Close')
     
     model_path = f"models/{ticker}_lstm.pth"
     if os.path.exists(model_path):
@@ -107,8 +107,15 @@ def train_model(ticker="R_75", seq_length=30, epochs=20, batch_size=32, learning
         except Exception as e:
             print(f"Error loading checkpoint: {e}. Starting fresh.")
     
-    criterion = nn.MSELoss() # Changed to MSELoss for regression
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    criterion = nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
+
+    # Early Stopping params
+    best_loss = float('inf')
+    patience = 15
+    patience_counter = 0
+    best_model_state = None
 
     # Training Loop
     print(f"Training for {epochs} epochs...")
@@ -118,25 +125,49 @@ def train_model(ticker="R_75", seq_length=30, epochs=20, batch_size=32, learning
         for batch_X, batch_y in train_loader:
             optimizer.zero_grad()
             predictions = model(batch_X)
-            loss = criterion(predictions, batch_y)
+            loss = criterion(predictions, batch_y.float())
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
         
+        avg_train_loss = total_loss / len(train_loader)
+        
+        # Validation
+        model.eval()
+        with torch.no_grad():
+            val_preds = model(X_test_t)
+            val_loss = criterion(val_preds, y_test_t.float()).item()
+            
+        scheduler.step(val_loss)
+        
+        if val_loss < best_loss:
+            best_loss = val_loss
+            patience_counter = 0
+            best_model_state = model.state_dict().copy()
+        else:
+            patience_counter += 1
+            
         if (epoch + 1) % 5 == 0:
-            avg_loss = total_loss / len(train_loader)
-            print(f"Epoch {epoch+1}: Loss {avg_loss:.6f}") # Increased precision for MSE
+            print(f"Epoch {epoch+1:03d} | Train Loss: {avg_train_loss:.4f} | Val Loss: {val_loss:.4f} | Patience: {patience_counter}/{patience}")
+            
+        if patience_counter >= patience:
+            print(f"Early stopping triggered at epoch {epoch+1}")
+            break
 
     # Step 5: Evaluate
-    print("\n[5/5] Evaluating...")
+    print("\n[5/5] Evaluating Best Model...")
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
+        
     model.eval()
     with torch.no_grad():
-        test_predictions = model(X_test_t)
-        # For regression, evaluation metric could be something like RMSE
-        mse = criterion(test_predictions, y_test_t)
-        rmse = torch.sqrt(mse)
+        test_logits = model(X_test_t)
+        test_probs = torch.sigmoid(test_logits)
+        test_preds = (test_probs > 0.5).float()
+        correct = (test_preds == y_test_t.float()).sum().item()
+        accuracy = correct / len(y_test_t)
         
-    print(f"Test RMSE: {rmse.item():.6f}")
+    print(f"Test Accuracy: {accuracy * 100:.2f}%")
 
     # Save
     torch.save({
@@ -144,18 +175,16 @@ def train_model(ticker="R_75", seq_length=30, epochs=20, batch_size=32, learning
         'input_size': input_size,
         'seq_length': seq_length,
         'ticker': ticker,
-        'rmse': rmse.item(),
+        'accuracy': accuracy,
         'feature_columns': feature_columns # Save feature columns
     }, model_path)
     print(f"Model saved to {model_path}")
-    
-    return rmse.item()
-
+    return accuracy
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--ticker", type=str, default="R_75")
-    parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument("--epochs", type=int, default=100)
     args = parser.parse_args()
 
     train_model(ticker=args.ticker, epochs=args.epochs)

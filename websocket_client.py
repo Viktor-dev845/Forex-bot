@@ -48,7 +48,7 @@ class DerivWebSocketClient:
         """
         self.symbols = symbols
         self.api_token = api_token
-        self.ws_url = "wss://ws.derivws.com/websockets/v3?app_id=1089"
+        self.ws_url = "wss://ws.derivws.com/websockets/v3?app_id=344Jxh9ST3khy7uu8Z3Ic"
         
         # Thread-safe price storage
         self.prices: Dict[str, float] = {}
@@ -270,3 +270,66 @@ if __name__ == "__main__":
     finally:
         client.disconnect()
         print("Test complete!")
+
+
+class IQOptionWebSocketClient:
+    """
+    WebSocket wrapper for IQ Option real-time prices.
+    iqoptionapi handles the actual websocket connection internally.
+    """
+    def __init__(self, symbols: List[str], email: str, password: str):
+        try:
+            from iqoptionapi.stable_api import IQ_Option
+        except ImportError:
+            logger.error("iqoptionapi not installed.")
+            return
+            
+        self.symbols = symbols
+        self.api = IQ_Option(email, password)
+        self.connected = False
+        
+    def connect(self):
+        if not hasattr(self, 'api'):
+            logger.error("IQ Option API is not initialized. Make sure iqoptionapi is installed in this python environment.")
+            return
+            
+        status, reason = self.api.connect()
+        if status:
+            self.connected = True
+            logger.info("IQ Option connected. Starting real-time streams...")
+            for symbol in self.symbols:
+                # 1 means 1 second (realtime), maxdict=1 keeps only the latest
+                self.api.start_candles_stream(symbol, 1, 1)
+        else:
+            logger.error(f"IQ Option connection failed: {reason}")
+            
+    def get_latest_price(self, symbol: str) -> Optional[float]:
+        if not self.connected: return None
+        try:
+            candles = self.api.get_realtime_candles(symbol, 1)
+            if candles:
+                # get the last candle
+                last_key = list(candles.keys())[-1]
+                return float(candles[last_key]['close'])
+        except Exception as e:
+            logger.error(f"Error getting realtime price for {symbol}: {e}")
+        return None
+        
+    def get_all_prices(self) -> Dict[str, float]:
+        prices = {}
+        for symbol in self.symbols:
+            price = self.get_latest_price(symbol)
+            if price:
+                prices[symbol] = price
+        return prices
+        
+    def disconnect(self):
+        if self.connected:
+            for symbol in self.symbols:
+                self.api.stop_candles_stream(symbol, 1)
+            self.connected = False
+            logger.info("IQ Option streams stopped.")
+            
+    def is_connected(self) -> bool:
+        return self.connected
+

@@ -2449,3 +2449,358 @@ training data did not have the following fields: Day_of_Week
 	Missing key(s) in state_dict: "lstm.weight_ih_l0", "lstm.weight_hh_l0", "lstm.bias_ih_l0", "lstm.bias_hh_l0", "lstm.weight_ih_l1", "lstm.weight_hh_l1", "lstm.bias_ih_l1", "lstm.bias_hh_l1", "fc.0.weight", "fc.0.bias", "fc.3.weight", "fc.3.bias". 
 	Unexpected key(s) in state_dict: "model_state_dict", "input_size", "seq_length", "ticker", "rmse", "feature_columns". 
 2026-01-13 12:10:41 | ERROR    | trading_bot | Failed to reconcile state with broker: 'DerivExecutorSync' object has no attribute 'get_open_positions'
+2026-08-11 10:56:00 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:00 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:56:07 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:07 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:56:15 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:15 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:56:22 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:22 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:56:29 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:29 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:56:36 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:36 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:56:44 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:44 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:56:51 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:51 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:56:59 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:56:59 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:57:06 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:57:06 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:57:13 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:57:13 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:57:20 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:57:20 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:57:28 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:57:28 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:57:38 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:57:38 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:57:45 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:57:45 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:57:52 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:57:52 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:57:59 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:57:59 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:58:06 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:58:06 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:58:15 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:58:15 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:58:22 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:58:22 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:58:30 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:58:30 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:58:37 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:58:37 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:58:45 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:58:45 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:58:52 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:58:52 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:58:59 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:58:59 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:59:06 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:59:06 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:59:14 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:59:14 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 10:59:21 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 321, in make_prediction
+    probs = model.predict(latest_features) # returns prob of class 1
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\ai_model.py", line 45, in predict
+    raise RuntimeError("Model is neither trained nor loaded.")
+RuntimeError: Model is neither trained nor loaded.
+
+2026-08-11 10:59:21 | ERROR    | trading_bot | Critical Loop Error: unsupported format string passed to NoneType.__format__
+2026-08-11 11:10:07 | ERROR    | trading_bot | [EURUSD-OTC] Failed to load LSTM weights. Using untrained. Error: Error(s) in loading state_dict for TradingLSTM:
+	Missing key(s) in state_dict: "lstm.weight_ih_l0", "lstm.weight_hh_l0", "lstm.bias_ih_l0", "lstm.bias_hh_l0", "lstm.weight_ih_l1", "lstm.weight_hh_l1", "lstm.bias_ih_l1", "lstm.bias_hh_l1", "fc.0.weight", "fc.0.bias", "fc.3.weight", "fc.3.bias". 
+	Unexpected key(s) in state_dict: "model_state_dict", "input_size", "seq_length", "ticker", "rmse", "feature_columns". 
+2026-08-11 11:15:55 | ERROR    | trading_bot | [EURUSD-OTC] Failed to load LSTM weights. Using untrained. Error: Error(s) in loading state_dict for TradingLSTM:
+	Missing key(s) in state_dict: "lstm.weight_ih_l0", "lstm.weight_hh_l0", "lstm.bias_ih_l0", "lstm.bias_hh_l0", "lstm.weight_ih_l1", "lstm.weight_hh_l1", "lstm.bias_ih_l1", "lstm.bias_hh_l1", "fc.0.weight", "fc.0.bias", "fc.3.weight", "fc.3.bias". 
+	Unexpected key(s) in state_dict: "model_state_dict", "input_size", "seq_length", "ticker", "rmse", "feature_columns". 
+2026-08-11 11:22:45 | ERROR    | trading_bot | [EURUSD-OTC] Failed to load LSTM weights. Using untrained. Error: Error(s) in loading state_dict for TradingLSTM:
+	Missing key(s) in state_dict: "lstm.weight_ih_l0", "lstm.weight_hh_l0", "lstm.bias_ih_l0", "lstm.bias_hh_l0", "lstm.weight_ih_l1", "lstm.weight_hh_l1", "lstm.bias_ih_l1", "lstm.bias_hh_l1", "fc.0.weight", "fc.0.bias", "fc.3.weight", "fc.3.bias". 
+	Unexpected key(s) in state_dict: "model_state_dict", "input_size", "seq_length", "ticker", "rmse", "feature_columns". 
+2026-08-12 23:30:47 | ERROR    | trading_bot | [EURUSD-OTC] Failed to load LSTM weights. Using untrained. Error: Error(s) in loading state_dict for TradingLSTM:
+	size mismatch for lstm.weight_ih_l0: copying a param with shape torch.Size([128, 70]) from checkpoint, the shape in current model is torch.Size([256, 57]).
+	size mismatch for lstm.weight_hh_l0: copying a param with shape torch.Size([128, 32]) from checkpoint, the shape in current model is torch.Size([256, 64]).
+	size mismatch for lstm.bias_ih_l0: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for lstm.bias_hh_l0: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for lstm.weight_ih_l1: copying a param with shape torch.Size([128, 32]) from checkpoint, the shape in current model is torch.Size([256, 64]).
+	size mismatch for lstm.weight_hh_l1: copying a param with shape torch.Size([128, 32]) from checkpoint, the shape in current model is torch.Size([256, 64]).
+	size mismatch for lstm.bias_ih_l1: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for lstm.bias_hh_l1: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for fc.0.weight: copying a param with shape torch.Size([16, 32]) from checkpoint, the shape in current model is torch.Size([16, 64]).
+2026-08-12 23:30:50 | ERROR    | trading_bot | Critical Loop Error: 'TradingBot' object has no attribute 'check_binary_outcomes'
+2026-08-12 23:30:55 | ERROR    | trading_bot | Critical Loop Error: 'TradingBot' object has no attribute 'check_binary_outcomes'
+2026-08-12 23:31:00 | ERROR    | trading_bot | Critical Loop Error: 'TradingBot' object has no attribute 'check_binary_outcomes'
+2026-08-12 23:31:05 | ERROR    | trading_bot | Critical Loop Error: 'TradingBot' object has no attribute 'check_binary_outcomes'
+2026-08-12 23:31:11 | ERROR    | trading_bot | Critical Loop Error: 'TradingBot' object has no attribute 'check_binary_outcomes'
+2026-08-12 23:31:16 | ERROR    | trading_bot | Critical Loop Error: 'TradingBot' object has no attribute 'check_binary_outcomes'
+2026-08-12 23:32:42 | ERROR    | trading_bot | [EURUSD-OTC] Failed to load LSTM weights. Using untrained. Error: Error(s) in loading state_dict for TradingLSTM:
+	size mismatch for lstm.weight_ih_l0: copying a param with shape torch.Size([128, 70]) from checkpoint, the shape in current model is torch.Size([256, 57]).
+	size mismatch for lstm.weight_hh_l0: copying a param with shape torch.Size([128, 32]) from checkpoint, the shape in current model is torch.Size([256, 64]).
+	size mismatch for lstm.bias_ih_l0: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for lstm.bias_hh_l0: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for lstm.weight_ih_l1: copying a param with shape torch.Size([128, 32]) from checkpoint, the shape in current model is torch.Size([256, 64]).
+	size mismatch for lstm.weight_hh_l1: copying a param with shape torch.Size([128, 32]) from checkpoint, the shape in current model is torch.Size([256, 64]).
+	size mismatch for lstm.bias_ih_l1: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for lstm.bias_hh_l1: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for fc.0.weight: copying a param with shape torch.Size([16, 32]) from checkpoint, the shape in current model is torch.Size([16, 64]).
+2026-08-12 23:32:50 | CRITICAL | trading_bot | [FAIL] MODEL FAILURE (lstm): input.size(-1) must be equal to input_size. Expected 57, got 70
+2026-08-12 23:32:50 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 347, in make_prediction
+    logits = model(X_tensor)
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\models\lstm_model.py", line 55, in forward
+    lstm_out, _ = self.lstm(x)
+                  ~~~~~~~~~^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\rnn.py", line 1145, in forward
+    self.check_forward_args(input, hx, batch_sizes)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\rnn.py", line 1039, in check_forward_args
+    self.check_input(input, batch_sizes)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\rnn.py", line 329, in check_input
+    raise RuntimeError(
+        f"input.size(-1) must be equal to input_size. Expected {self.input_size}, got {input.size(-1)}"
+    )
+RuntimeError: input.size(-1) must be equal to input_size. Expected 57, got 70
+
+2026-08-12 23:35:04 | CRITICAL | trading_bot | [FAIL] MODEL FAILURE (lstm): input.size(-1) must be equal to input_size. Expected 57, got 70
+2026-08-12 23:35:04 | ERROR    | trading_bot | Traceback (most recent call last):
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\trading_bot.py", line 347, in make_prediction
+    logits = model(X_tensor)
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "C:\Users\Dell\Desktop\forex\Forex-bot\models\lstm_model.py", line 55, in forward
+    lstm_out, _ = self.lstm(x)
+                  ~~~~~~~~~^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\rnn.py", line 1145, in forward
+    self.check_forward_args(input, hx, batch_sizes)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\rnn.py", line 1039, in check_forward_args
+    self.check_input(input, batch_sizes)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\rnn.py", line 329, in check_input
+    raise RuntimeError(
+        f"input.size(-1) must be equal to input_size. Expected {self.input_size}, got {input.size(-1)}"
+    )
+RuntimeError: input.size(-1) must be equal to input_size. Expected 57, got 70
+
+2026-08-12 23:35:56 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:36:05 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:36:19 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:36:28 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:36:37 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:36:47 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:37:11 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:38:27 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:38:36 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:38:46 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:38:55 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:39:04 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:39:13 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-12 23:39:22 | ERROR    | trading_bot | Critical Loop Error: '>' not supported between instances of 'dict' and 'float'
+2026-08-14 08:40:08 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:14 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:16 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:21 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:22 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:27 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:27 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:32 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:33 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:38 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:38 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:43 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:43 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:48 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:48 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:53 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:53 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:58 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:40:58 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:41:04 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:41:04 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:41:10 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-14 08:41:10 | ERROR    | trading_bot | Critical Loop Error: Expecting value: line 1 column 2 (char 1)
+2026-08-14 13:11:18 | ERROR    | trading_bot | Order rejected for EURUSD. Possible suspension. Triggering rotation.

@@ -19,6 +19,11 @@ def prepare_data(data, lookahead=1):
     # Target: 1 if Price[t + lookahead] > Price[t], else 0
     # Future returns
     df['Future_Return'] = df['Close'].shift(-lookahead) - df['Close']
+    
+    # No-Trade Filter: Drop the weakest 30% of price moves to train only on clear signals
+    threshold = df['Future_Return'].abs().quantile(0.3)
+    df = df[df['Future_Return'].abs() > threshold].copy()
+    
     df['Target'] = (df['Future_Return'] > 0).astype(int)
     
     # Drop NaNs created by shifting
@@ -76,23 +81,54 @@ def train_pipeline(symbol="R_75"):
     
     print(f"Training on {len(X_train)} samples, Testing on {len(X_test)} samples.")
     
-    # 4. Train Model
-    print("\nTraining XGBoost model...")
-    model_path = f"models/{symbol}_xgboost.json"
-    model = ForexModel(model_path=model_path, n_estimators=500, max_depth=6) # Slightly boosted params
-    model.train(X_train, y_train)
+    # 4. Train Model with RandomizedSearchCV
+    print("\nTraining XGBoost model with Hyperparameter Tuning...")
+    import xgboost as xgb
+    from sklearn.model_selection import RandomizedSearchCV
+    
+    param_grid = {
+        'max_depth': [3, 5, 7],
+        'learning_rate': [0.01, 0.05, 0.1],
+        'n_estimators': [100, 300, 500],
+        'subsample': [0.8, 1.0],
+        'colsample_bytree': [0.8, 1.0],
+        'reg_alpha': [0, 0.1, 1, 10], # L1 Regularization
+        'reg_lambda': [0.1, 1, 10, 100] # L2 Regularization
+    }
+    
+    base_model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss', random_state=42, n_jobs=-1)
+    
+    random_search = RandomizedSearchCV(
+        estimator=base_model,
+        param_distributions=param_grid,
+        n_iter=10,
+        scoring='accuracy',
+        cv=3,
+        verbose=1,
+        random_state=42,
+        n_jobs=-1
+    )
+    
+    random_search.fit(X_train, y_train)
+    
+    print(f"Best parameters found: {random_search.best_params_}")
+    best_xgb = random_search.best_estimator_
     
     # 5. Evaluate
     print("\nEvaluating Model...")
-    preds_prob = model.predict(X_test)
+    preds_prob = best_xgb.predict_proba(X_test)[:, 1]
     preds_class = (preds_prob > 0.5).astype(int)
     
     accuracy = (preds_class == y_test).mean()
     print(f"Test Accuracy: {accuracy:.2%}")
     
     # 6. Save Model
-    model.save_model()
-    print(f"\n✅ Training Complete for {symbol}. Model saved to {model_path}.")
+    model_path = f"models/{symbol}_xgboost.json"
+    if not os.path.exists('models'):
+        os.makedirs('models')
+    best_xgb.get_booster().save_model(model_path)
+    
+    print(f"\n[SUCCESS] Training Complete for {symbol}. Model saved to {model_path}.")
     return accuracy
 
 if __name__ == "__main__":

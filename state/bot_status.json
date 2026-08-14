@@ -1,44 +1,272 @@
 {
-  "timestamp": "2026-01-13T12:10:42.382499",
-  "market_type": "synthetics",
+  "timestamp": "2026-08-14T10:40:02.120506",
+  "market_type": "iqoption",
   "symbols": [
-    "Volatility 75 Index",
-    "Crash 500 Index",
-    "Boom 1000 Index"
+    "NZDUSD-OTC"
   ],
   "account": {
-    "cash": 0.0,
-    "equity": 0.0,
-    "return_pct": 0.0,
-    "buying_power": 0.0,
+    "cash": 50.8,
+    "equity": 50.8,
+    "return_pct": 0,
+    "buying_power": 50.8,
     "daily_pnl": 0.0
   },
-  "positions": [],
-  "trade_history": [],
+  "positions": [
+    {
+      "symbol": "NZDUSD-OTC",
+      "qty": 10,
+      "side": "short",
+      "entry_price": 0.601125,
+      "unrealized_pl": -6.01125
+    }
+  ],
+  "trade_history": [
+    {
+      "id": 20,
+      "timestamp": "2026-08-14T10:38:54.044679",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.601125,
+      "order_id": "14165059552",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 19,
+      "timestamp": "2026-08-14T09:00:42.346126",
+      "symbol": "GBPUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 1.349345,
+      "order_id": "14164922344",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 18,
+      "timestamp": "2026-08-14T08:41:27.362836",
+      "symbol": "GBPUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 1.349105,
+      "order_id": "14164897381",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 17,
+      "timestamp": "2026-08-13T11:41:09.803975",
+      "symbol": "EURUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 1.148305,
+      "order_id": "14161959723",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 16,
+      "timestamp": "2026-08-13T00:02:10.648299",
+      "symbol": "EURUSD-OTC",
+      "side": "BUY",
+      "quantity": 10.0,
+      "price": 1.132405,
+      "order_id": "14160547188",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 15,
+      "timestamp": "2026-08-12T23:57:15.041704",
+      "symbol": "EURUSD-OTC",
+      "side": "BUY",
+      "quantity": 10.0,
+      "price": 1.132695,
+      "order_id": "14160534784",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 14,
+      "timestamp": "2026-08-12T23:44:58.134048",
+      "symbol": "EURUSD-OTC",
+      "side": "BUY",
+      "quantity": 10.0,
+      "price": 1.132835,
+      "order_id": "14160503975",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 13,
+      "timestamp": "2026-08-12T23:39:51.147207",
+      "symbol": "EURUSD-OTC",
+      "side": "BUY",
+      "quantity": 10.0,
+      "price": 1.133575,
+      "order_id": "14160490804",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 12,
+      "timestamp": "2026-08-11T12:50:08.360748",
+      "symbol": "EURUSD-OTC",
+      "side": "CLOSE",
+      "quantity": 10.0,
+      "price": 1.143845,
+      "order_id": "14155864821",
+      "pnl": 0.007900000000000684,
+      "notes": "PnL: 0.01",
+      "strategy": "AI"
+    },
+    {
+      "id": 11,
+      "timestamp": "2026-08-11T12:40:04.134058",
+      "symbol": "EURUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 1.144635,
+      "order_id": "14155841636",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 10,
+      "timestamp": "2026-08-11T12:35:03.202076",
+      "symbol": "EURUSD-OTC",
+      "side": "CLOSE",
+      "quantity": 10.0,
+      "price": 1.145085,
+      "order_id": "14155830373",
+      "pnl": -0.00320000000000098,
+      "notes": "PnL: -0.00",
+      "strategy": "AI"
+    },
+    {
+      "id": 9,
+      "timestamp": "2026-08-11T12:25:05.586146",
+      "symbol": "EURUSD-OTC",
+      "side": "BUY",
+      "quantity": 10.0,
+      "price": 1.145405,
+      "order_id": "14155809982",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 8,
+      "timestamp": "2026-08-11T12:20:03.485678",
+      "symbol": "EURUSD-OTC",
+      "side": "CLOSE",
+      "quantity": 10.0,
+      "price": 1.145785,
+      "order_id": "14155799233",
+      "pnl": 0.0031000000000003247,
+      "notes": "PnL: 0.00",
+      "strategy": "AI"
+    },
+    {
+      "id": 7,
+      "timestamp": "2026-08-11T12:10:02.870329",
+      "symbol": "EURUSD-OTC",
+      "side": "BUY",
+      "quantity": 10.0,
+      "price": 1.145475,
+      "order_id": "14155778907",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 6,
+      "timestamp": "2026-08-11T12:05:03.616653",
+      "symbol": "EURUSD-OTC",
+      "side": "CLOSE",
+      "quantity": 10.0,
+      "price": 1.145995,
+      "order_id": "14155768840",
+      "pnl": 0.00520000000000076,
+      "notes": "PnL: 0.01",
+      "strategy": "AI"
+    },
+    {
+      "id": 5,
+      "timestamp": "2026-08-11T12:00:03.582683",
+      "symbol": "EURUSD-OTC",
+      "side": "BUY",
+      "quantity": 10.0,
+      "price": 1.145475,
+      "order_id": "14155757415",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 4,
+      "timestamp": "2026-08-11T11:55:04.552785",
+      "symbol": "EURUSD-OTC",
+      "side": "CLOSE",
+      "quantity": 10.0,
+      "price": 1.146805,
+      "order_id": "14155747046",
+      "pnl": 0.0018999999999991246,
+      "notes": "PnL: 0.00",
+      "strategy": "AI"
+    },
+    {
+      "id": 3,
+      "timestamp": "2026-08-11T11:51:51.605247",
+      "symbol": "EURUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 1.146995,
+      "order_id": "14155739229",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 2,
+      "timestamp": "2026-08-11T11:16:02.127532",
+      "symbol": "EURUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 1.148425,
+      "order_id": "PAPER-1",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 1,
+      "timestamp": "2026-08-11T11:10:15.325673",
+      "symbol": "EURUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 1.146885,
+      "order_id": "PAPER-1",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    }
+  ],
   "predictions": {
-    "Volatility 75 Index": {
-      "prob": 0.9103438258171082,
-      "signal": "UP",
-      "timestamp": "2026-01-13T12:10:41.634621",
-      "ensemble": {
-        "xgboost": 0.9103438258171082
-      }
-    },
-    "Crash 500 Index": {
-      "prob": 0.7777764201164246,
-      "signal": "UP",
-      "timestamp": "2026-01-13T12:10:41.826306",
-      "ensemble": {
-        "xgboost": 0.7777764201164246
-      }
-    },
-    "Boom 1000 Index": {
-      "prob": 0.1658981889486313,
+    "NZDUSD-OTC": {
+      "prob": 0.04993785545229912,
       "signal": "DOWN",
-      "timestamp": "2026-01-13T12:10:41.994868",
-      "ensemble": {
-        "xgboost": 0.1658981889486313
-      }
+      "timestamp": "2026-08-14T10:40:01.914797"
     }
   },
   "latest_logs": []

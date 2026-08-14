@@ -23,7 +23,6 @@ except ImportError:
 from models.lstm_model import TradingLSTM, create_sequences
 from ai_model import ForexModel
 from utils.data_loader import fetch_historical_data
-from utils.preprocessing import DataPreprocessor
 from feature_engine import FeatureEngine
 from strategies.backtester import Backtester
 

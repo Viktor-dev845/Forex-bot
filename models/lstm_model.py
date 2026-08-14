@@ -13,7 +13,7 @@ class TradingLSTM(nn.Module):
     """
     An LSTM model for time-series regression.
     """
-    def __init__(self, input_size, hidden_size=64, num_layers=2, dropout=0.2, output_size=1):
+    def __init__(self, input_size, hidden_size=32, num_layers=2, dropout=0.5, output_size=1):
         """
         Args:
             input_size (int): Number of input features (e.g., OHLCV + indicators).
@@ -35,10 +35,10 @@ class TradingLSTM(nn.Module):
         )
         
         self.fc = nn.Sequential(
-            nn.Linear(hidden_size, 32),
+            nn.Linear(hidden_size, 16),
             nn.LeakyReLU(0.01),
             nn.Dropout(dropout),
-            nn.Linear(32, output_size)
+            nn.Linear(16, output_size)
         )
         
     def forward(self, x):
@@ -63,7 +63,7 @@ class TradingLSTM(nn.Module):
         return prediction
 
 
-def create_sequences(data, seq_length=30, target_col_index=3):
+def create_sequences(data, seq_length=10, target_col_index=3, threshold=0.15):
     """
     Creates sequences for LSTM training (regression).
     
@@ -79,11 +79,18 @@ def create_sequences(data, seq_length=30, target_col_index=3):
     X, y = [], []
     
     for i in range(len(data) - seq_length):
+        current_price = data[i + seq_length - 1, target_col_index]
+        next_price = data[i + seq_length, target_col_index]
+        
+        price_change = next_price - current_price
+        
+        # No-Trade Filter: Skip sequences where price barely moved
+        if abs(price_change) < threshold:
+            continue
+            
         # Input sequence
         X.append(data[i:i + seq_length])
-        
-        # Label: The value of the target column at the next time step
-        y.append(data[i + seq_length, target_col_index])
+        y.append([1.0 if price_change > 0 else 0.0])
         
     return np.array(X), np.array(y)
 

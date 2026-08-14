@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import joblib
 from ta.trend import SMAIndicator, EMAIndicator, MACD, ADXIndicator, AroonIndicator
 from ta.momentum import RSIIndicator, StochasticOscillator, ROCIndicator, AwesomeOscillatorIndicator
@@ -13,13 +13,13 @@ class FeatureEngine:
     """
     
     def __init__(self, ticker=""):
-        self.scaler = MinMaxScaler(feature_range=(0, 1))
+        self.scaler = StandardScaler()
         self.scaler_path = f"models/{ticker}_scaler.gz"
         self.ticker = ticker
 
     def normalize_data(self, df, fit_scaler=False):
         """
-        Normalizes the feature columns using MinMaxScaler.
+        Normalizes the feature columns using StandardScaler.
         If fit_scaler is True, it fits the scaler to the data and saves it.
         Otherwise, it loads and uses the existing scaler.
         """
@@ -89,6 +89,22 @@ class FeatureEngine:
             data['Day_Sin'] = 0
             data['Day_Cos'] = 0
 
+        # --- Log Returns & Lag Features ---
+        # Highly effective for neural networks to understand percentage variance
+        data['Log_Return'] = np.log(data['Close'] / data['Close'].shift(1))
+        data['Log_Return'] = data['Log_Return'].fillna(0)
+        
+        for i in range(1, 6):
+            data[f'Log_Return_Lag_{i}'] = data['Log_Return'].shift(i).fillna(0)
+
+        # --- Fast Fourier Transform (FFT) Smoothing ---
+        # Extracts dominant cyclical trends without the lag of moving averages
+        close_fft = np.fft.fft(np.asarray(data['Close'].tolist()))
+        fft_list = np.copy(close_fft)
+        fft_list[15:-15] = 0  # Keep only the lowest 15 frequencies (strongest macro trends)
+        data['FFT_Smoothed'] = np.fft.ifft(fft_list).real
+        data['Dist_FFT'] = (data['Close'] - data['FFT_Smoothed']) / data['Close']
+
         # --- 2. Trend & Efficiency ---
         
         # SMAs
@@ -115,7 +131,18 @@ class FeatureEngine:
         direction = np.abs(data['Close'] - data['Close'].shift(n))
         volatility = data['Close'].diff().abs().rolling(window=n).sum()
         data['Efficiency_Ratio'] = direction / volatility
-        data['Efficiency_Ratio'].replace([np.inf, -np.inf], 0, inplace=True) # Handle div by zero
+        data['Efficiency_Ratio'] = data['Efficiency_Ratio'].replace([np.inf, -np.inf], 0).fillna(0) # Handle div by zero safely
+        
+        # MACD
+        macd = MACD(close=data['Close'], window_slow=26, window_fast=12, window_sign=9)
+        data['MACD'] = macd.macd()
+        data['MACD_Signal'] = macd.macd_signal()
+        data['MACD_Diff'] = macd.macd_diff()
+        
+        # EMA Crossovers
+        data['EMA_9'] = EMAIndicator(close=data['Close'], window=9).ema_indicator()
+        data['EMA_21'] = EMAIndicator(close=data['Close'], window=21).ema_indicator()
+        data['EMA_Cross'] = data['EMA_9'] - data['EMA_21']
 
         # --- 3. Momentum ---
         
@@ -218,20 +245,20 @@ class FeatureEngine:
         data['RVI'] = 100 * std_up / (std_up + std_down + 1e-10)  # Avoid div by zero
         
         # Williams Fractals - Clear reversal points on algorithmic data
-        # Fractal Up: Current high is highest in 5-bar window
-        # Fractal Down: Current low is lowest in 5-bar window
+        # Fractal Up: High at t-2 is the highest in the 5-bar window ending at t
+        # Fractal Down: Low at t-2 is the lowest in the 5-bar window ending at t
         data['Fractal_Up'] = (
-            (data['High'] > data['High'].shift(1)) & 
-            (data['High'] > data['High'].shift(2)) &
-            (data['High'] > data['High'].shift(-1)) & 
-            (data['High'] > data['High'].shift(-2))
+            (data['High'].shift(2) > data['High'].shift(3)) & 
+            (data['High'].shift(2) > data['High'].shift(4)) &
+            (data['High'].shift(2) > data['High'].shift(1)) & 
+            (data['High'].shift(2) > data['High'])
         ).astype(int)
         
         data['Fractal_Down'] = (
-            (data['Low'] < data['Low'].shift(1)) & 
-            (data['Low'] < data['Low'].shift(2)) &
-            (data['Low'] < data['Low'].shift(-1)) & 
-            (data['Low'] < data['Low'].shift(-2))
+            (data['Low'].shift(2) < data['Low'].shift(3)) & 
+            (data['Low'].shift(2) < data['Low'].shift(4)) &
+            (data['Low'].shift(2) < data['Low'].shift(1)) & 
+            (data['Low'].shift(2) < data['Low'])
         ).astype(int)
         
         # Distance to last fractal (useful feature for LSTM)

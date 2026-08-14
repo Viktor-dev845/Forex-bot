@@ -1153,5 +1153,163 @@ class MT5Executor(OrderExecutor):
             "BOOM300": "Boom 300 Index",
 
             "CRASH300": "Crash 300 Index"
+        }
+
+
+
+class IQOptionExecutor(OrderExecutor):
+
+    """
+
+    Executor for IQ Option Binary Trading.
+
+    """
+
+    def __init__(self, email, password, account_type="PRACTICE"):
+
+        try:
+
+            from iqoptionapi.stable_api import IQ_Option
+
+        except ImportError:
+
+            raise ImportError("Please install iqoptionapi: pip install iqoptionapi")
+
+        
+
+        self.api = IQ_Option(email, password)
+
+        status, reason = self.api.connect()
+
+        if not status:
+
+            raise Exception(f"IQ Option Connection failed: {reason}")
+
+            
+
+        self.api.change_balance(account_type)
+
+        self.paper_trading = (account_type == 'PRACTICE')
+
+        logger.info(f"Connected to IQ Option ({account_type} account)")
+
+        
+
+    def submit_order(self, symbol: str, side: OrderSide, quantity: int,
+
+                     order_type: str = "market", limit_price: Optional[float] = None,
+
+                     stop_loss: Optional[float] = None, take_profit: Optional[float] = None) -> Order:
+
+        # Binary Options: quantity is the stake amount.
+
+        # action is "call" or "put"
+
+        action = "call" if side == OrderSide.BUY else "put"
+
+        # We default to 2 minutes expiration for binary options
+        expirations_mode = 2
+
+        
+
+        status, order_id = self.api.buy(quantity, symbol, action, expirations_mode)
+
+        
+
+        if status:
+
+            logger.info(f"[IQOPTION] Order placed: {action.upper()} {quantity} on {symbol}")
+
+            return Order(
+
+                id=str(order_id),
+
+                symbol=symbol,
+
+                side=side,
+
+                quantity=quantity,
+
+                order_type="binary",
+
+                status=OrderStatus.FILLED # Binary trades execute instantly
+
+            )
+
+        else:
+
+            logger.error(f"[IQOPTION] Order failed: {order_id}")
+
+            return Order(
+
+                id="ERROR",
+
+                symbol=symbol,
+
+                side=side,
+
+                quantity=quantity,
+
+                order_type="binary",
+
+                status=OrderStatus.REJECTED
+
+            )
+
+            
+
+    def cancel_order(self, order_id: str) -> bool:
+        logger.warning("Cancel order not supported for Binary Options.")
+        return False
+
+    def check_win(self, order_id: str) -> dict:
+        """Checks if a binary options trade won or lost (NON-BLOCKING)"""
+        try:
+            # Non-blocking fetch of recent closed options
+            result = self.api.get_optioninfo_v2(30)
+            if result and 'msg' in result and 'closed_options' in result['msg']:
+                for opt in result['msg']['closed_options']:
+                    if opt.get('id') and opt['id'][0] == int(order_id):
+                        win_status = opt.get('win', 'equal')
+                        profit = (opt.get('win_amount', 0) - opt.get('amount', 0)) if win_status != 'equal' else 0
+                        return {'status': True, 'profit': profit}
+                        
+            # If not found in closed options, the option is still open or hasn't settled
+            return {'status': False, 'profit': 0}
+        except Exception as e:
+            logger.error(f"Failed to check win for {order_id}: {e}")
+            return {'status': False, 'profit': 0}
+        
+    def get_order_status(self, order_id: str) -> OrderStatus:
+
+        return OrderStatus.FILLED
+
+        
+
+    def get_position(self, symbol: str) -> dict:
+
+        return {'qty': 0, 'avg_price': 0}
+
+        
+
+    def get_account(self) -> dict:
+
+        balance = self.api.get_balance()
+
+        return {
+
+            'cash': balance,
+
+            'position_value': 0,
+
+            'total_equity': balance,
+
+            'buying_power': balance
 
         }
+
+        
+
+    def get_open_positions(self) -> list:
+
+        return []

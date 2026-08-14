@@ -12,3 +12,4 @@ ta
 deriv_api
 python-dotenv
 MetaTrader5
+iqoptionapi

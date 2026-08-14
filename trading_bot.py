@@ -3,6 +3,7 @@ import json
 import time
 import os
 import sys
+import subprocess
 from datetime import datetime
 import pandas as pd
 import numpy as np
@@ -64,6 +65,11 @@ class TradingBot:
         if config.get('bot', {}).get('paper_trading', True):
             from strategies.order_executor import PaperTradingExecutor # Import here to avoid circular dependency if OrderExecutor is also in this file
             self.executor = PaperTradingExecutor(initial_capital=config.get('bot', {}).get('initial_capital', 10000))
+        elif config.get('bot', {}).get('market_type') == 'iqoption' and config.get('brokers', {}).get('iqoption', {}).get('enabled'):
+            from strategies.order_executor import IQOptionExecutor
+            iq_cfg = config.get('brokers', {}).get('iqoption', {})
+            self.executor = IQOptionExecutor(email=iq_cfg['email'], password=iq_cfg['password'], account_type=iq_cfg.get('account_type', 'PRACTICE'))
+            self.monitor.logger.info("Using IQ Option Executor")
         elif config.get('brokers', {}).get('deriv', {}).get('enabled'):
             from strategies.deriv_executor import DerivExecutorSync
             deriv_cfg = config.get('brokers', {}).get('deriv', {})
@@ -118,6 +124,10 @@ class TradingBot:
         self.last_trade_day = datetime.now().date()
         self.trading_halted = False
         
+        # Binary Options Martingale State
+        self.martingale_multiplier = 1
+        self.pending_binary_orders = {}
+        
         # Initialize Retrainer
         self.retrainer = RetrainingManager(accuracy_threshold=0.55, min_trades=20)
         
@@ -125,15 +135,29 @@ class TradingBot:
         self.websocket_client = None
         ws_config = config.get('websocket', {})
         if ws_config.get('enabled', False):
-            from websocket_client import DerivWebSocketClient
-            deriv_api_token = config.get('brokers', {}).get('deriv', {}).get('api_token')
-            self.websocket_client = DerivWebSocketClient(self.symbols, api_token=deriv_api_token)
-            self.websocket_client.connect()
-            self.monitor.logger.info("✅ WebSocket price streaming enabled")
+            if self.market_type == 'iqoption':
+                from websocket_client import IQOptionWebSocketClient
+                iq_cfg = config.get('brokers', {}).get('iqoption', {})
+                self.websocket_client = IQOptionWebSocketClient(self.symbols, iq_cfg['email'], iq_cfg['password'])
+                self.websocket_client.connect()
+                self.monitor.logger.info("[SUCCESS] IQ Option WebSocket streaming enabled")
+            else:
+                from websocket_client import DerivWebSocketClient
+                deriv_api_token = config.get('brokers', {}).get('deriv', {}).get('api_token')
+                self.websocket_client = DerivWebSocketClient(self.symbols, api_token=deriv_api_token)
+                self.websocket_client.connect()
+                self.monitor.logger.info("[SUCCESS] Deriv WebSocket streaming enabled")
         else:
             self.monitor.logger.info("WebSocket disabled - using periodic HTTP polling only")
         
         self.monitor.logger.info(f"Bot initialized for {self.symbols} ({'Paper' if self.executor.paper_trading else 'LIVE'} trading)")
+        
+        try:
+            account_info = self.executor.get_account()
+            if 'cash' in account_info and account_info['cash'] is not None:
+                self.monitor.logger.info(f"[BALANCE] Current Account Balance: ${account_info['cash']:.2f}")
+        except Exception as e:
+            self.monitor.logger.warning(f"Could not fetch account balance: {e}")
 
         # Load previous state
         self.load_state()
@@ -237,13 +261,16 @@ class TradingBot:
             # Dynamic path: models/{symbol}_lstm.pth
             model_path = f"models/{symbol}_lstm.pth"
             
-            # Input size is 57 (from FeatureEngine with new indicators)
-            model = TradingLSTM(input_size=57, hidden_size=lstm_params.get('hidden_size', 64), num_layers=lstm_params.get('num_layers', 2))
+            # Input size is 70 (from FeatureEngine with new indicators)
+            model = TradingLSTM(input_size=70, hidden_size=lstm_params.get('hidden_size', 32), num_layers=lstm_params.get('num_layers', 2))
             if os.path.exists(model_path):
                 import torch
                 try:
-                    # Note: Loading weights will fail if the model was trained with a different input_size
-                    model.load_state_dict(torch.load(model_path))
+                    checkpoint = torch.load(model_path)
+                    if 'model_state_dict' in checkpoint:
+                        model.load_state_dict(checkpoint['model_state_dict'])
+                    else:
+                        model.load_state_dict(checkpoint)
                     model.eval()
                     self.monitor.logger.info(f"[{symbol}] LSTM Model loaded from {model_path}")
                 except Exception as e:
@@ -274,7 +301,7 @@ class TradingBot:
                 feature_columns = [col for col in feature_columns if col not in ['Date', 'Datetime']]
                 
                 # Load the scaler saved during training
-                scaler_path = f"models/{self.symbols[0].replace(' ', '_')}_lstm_scaler.pkl"
+                scaler_path = f"models/{self.symbols[0].replace(' ', '_')}_scaler.gz"
                 
                 if os.path.exists(scaler_path):
                     import joblib
@@ -323,7 +350,7 @@ class TradingBot:
                 return prediction
 
         except Exception as e:
-            self.monitor.logger.critical(f"🔴 MODEL FAILURE ({model_type}): {e}")
+            self.monitor.logger.critical(f"[FAIL] MODEL FAILURE ({model_type}): {e}")
             import traceback
             self.monitor.logger.error(traceback.format_exc())
             return None
@@ -356,6 +383,103 @@ class TradingBot:
         except Exception as e:
             self.monitor.logger.error(f"Error updating CSV for {symbol}: {e}")
 
+    def _fetch_iqoption_data_live(self, symbol, time_interval, max_candles):
+        """Fetches candles using the existing connected API instance to prevent rate limits."""
+        try:
+            granularity_map = {"1m": 60, "2m": 120, "5m": 300, "15m": 900}
+            interval = granularity_map.get(time_interval, 120)
+            import time
+            candles = self.executor.api.get_candles(symbol, interval, max_candles, time.time())
+            if not candles:
+                return None
+            df = pd.DataFrame(candles)
+            df['Date'] = pd.to_datetime(df['from'], unit='s')
+            df.set_index('Date', inplace=True)
+            df.rename(columns={'max': 'High', 'min': 'Low', 'open': 'Open', 'close': 'Close', 'volume': 'Volume'}, inplace=True)
+            df.drop(['id', 'from', 'at', 'to'], axis=1, inplace=True, errors='ignore')
+            return df
+        except Exception as e:
+            self.monitor.logger.error(f"Error fetching live data: {e}")
+            return None
+
+    def rotate_symbol(self, old_symbol: str):
+        """Automatically find a new active pair, download data, train models, and swap."""
+        self.monitor.logger.warning(f"Starting AUTO-PAIR ROTATION to replace suspended pair: {old_symbol}")
+        
+        # 1. Manually poll for open pairs to bypass iqoptionapi get_all_open_time thread crash
+        try:
+            backup_pairs = [
+                'EURGBP', 'USDJPY', 'EURAUD', 'AUDUSD', 'USDCAD', 'NZDUSD',
+                'EURUSD-OTC', 'GBPUSD-OTC', 'NZDUSD-OTC', 'AUDCAD-OTC', 'USDCHF-OTC'
+            ]
+            
+            new_symbol = None
+            for pair in backup_pairs:
+                if pair == old_symbol:
+                    continue
+                self.monitor.logger.info(f"Testing backup pair: {pair}...")
+                df = self._fetch_iqoption_data_live(pair, "2m", 5)
+                if df is not None and not df.empty:
+                    new_symbol = pair
+                    break
+                    
+            if not new_symbol:
+                self.monitor.logger.error("No active backup pairs found!")
+                return False
+                
+            self.monitor.logger.info(f"Selected new pair: {new_symbol}")
+            
+            # 2. Fetch Data
+            self.monitor.logger.info(f"Fetching 50,000 candles for {new_symbol} (This may take a minute...)")
+            res = subprocess.run([sys.executable, "fetch_massive_data.py", "--symbol", new_symbol], capture_output=True, text=True)
+            if res.returncode != 0 or "Successfully collected" not in res.stdout:
+                self.monitor.logger.error(f"Failed to fetch data for {new_symbol}. stdout: {res.stdout}, stderr: {res.stderr}")
+                return False
+                
+            # 3. Train Models
+            self.monitor.logger.info(f"Training XGBoost model for {new_symbol}...")
+            res_xgb = subprocess.run([sys.executable, "train_model.py", "--symbol", new_symbol], capture_output=True, text=True)
+            if res_xgb.returncode != 0:
+                self.monitor.logger.error(f"XGBoost training failed for {new_symbol}.")
+                return False
+                
+            self.monitor.logger.info(f"Training LSTM model for {new_symbol}...")
+            res_lstm = subprocess.run([sys.executable, "train.py", "--ticker", new_symbol], capture_output=True, text=True)
+            if res_lstm.returncode != 0:
+                self.monitor.logger.error(f"LSTM training failed for {new_symbol}.")
+                return False
+                
+            # 4. Update configuration
+            self.config['markets'][self.market_type]['symbols'] = [new_symbol]
+            with open('config.json', 'w') as f:
+                json.dump(self.config, f, indent=4)
+                
+            # 5. Swap out active runtime variables
+            if old_symbol in self.symbols:
+                self.symbols.remove(old_symbol)
+            self.symbols.append(new_symbol)
+            
+            if old_symbol in self.positions:
+                del self.positions[old_symbol]
+            self.positions[new_symbol] = None
+            
+            if old_symbol in self.daily_pnl:
+                del self.daily_pnl[old_symbol]
+            self.daily_pnl[new_symbol] = 0.0
+            
+            # Load new models
+            self.models[new_symbol] = {
+                'xgboost': self._load_model('xgboost', new_symbol),
+                'lstm': self._load_model('lstm', new_symbol)
+            }
+            
+            self.monitor.logger.info(f"SUCCESS: Auto-Pair Rotation complete. Now trading {new_symbol}!")
+            return True
+            
+        except Exception as e:
+            self.monitor.logger.error(f"Auto-Pair Rotation failed: {e}")
+            return False
+
     def run_trading_cycle(self):
         self.monitor.logger.info(f"Trading Cycle - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
@@ -387,6 +511,14 @@ class TradingBot:
                 except Exception as e:
                     self.monitor.logger.error(f"[{symbol}] Failed to reload models: {e}")
 
+        # Fetch and log current balance
+        try:
+            account_info = self.executor.get_account()
+            if 'cash' in account_info and account_info['cash'] is not None:
+                self.monitor.logger.info(f"[BALANCE] Current Account Balance: ${account_info['cash']:.2f} (Daily PnL: {self.daily_pnl:+.2f})")
+        except Exception as e:
+            pass
+
         # 1. Fetch Data
         mt5_enabled = self.config.get('brokers', {}).get('mt5', {}).get('enabled', False)
         deriv_enabled = self.config.get('brokers', {}).get('deriv', {}).get('enabled', False)
@@ -408,6 +540,24 @@ class TradingBot:
             except Exception as e:
                 self.monitor.logger.error(f"Failed to fetch H1 data: {e}")
                 
+        elif self.market_type == 'iqoption':
+            from data_loader import fetch_iqoption_data
+            import asyncio
+            data_map = {}
+            for symbol in self.symbols:
+                if self.market_type == 'iqoption':
+                    df = self._fetch_iqoption_data_live(symbol, "2m", 500)
+                else:
+                    df = asyncio.run(fetch_iqoption_data(symbol, time_interval="2m", max_candles=500)) # Fallback if needed
+                    
+                if df is not None:
+                    self.save_market_data(symbol, df)
+                    data_map[symbol] = df
+                else:
+                    self.monitor.logger.warning(f"Failed to fetch data for {symbol}. Triggering rotation.")
+                    if self.market_type == 'iqoption':
+                        self.rotate_symbol(symbol)
+                    continue
         elif deriv_enabled or self.market_type == 'synthetics':
             # Fallback to Deriv API
             from data_loader import fetch_historical_data as fetch_deriv
@@ -488,11 +638,16 @@ class TradingBot:
                 features = self.prepare_features(df.copy(), model_type)
                 prediction = self.make_prediction(features, model, model_type)
                 
+                if prediction is None:
+                    self.monitor.logger.warning(f"[{symbol}] Prediction failed (model likely untrained). Skipping cycle.")
+                    continue
+                    
                 self.monitor.logger.info(f"Model Prediction for {symbol}: {prediction:.2%} ({'UP' if prediction > 0.5 else 'DOWN'})")
-                
-                # Wrap single prediction in dict for strategy compatibility (especially AnyStrongSignalStrategy)
-                prediction_input = {model_type: prediction}
-
+                # Wrap single prediction in dict for strategy compatibility only if using AnyStrongSignalStrategy
+                if strategy_name == 'any_strong_signal':
+                    prediction_input = {model_type: prediction}
+                else:
+                    prediction_input = prediction
             if prediction_input is not None:
                 # For ensemble, calculate average probability for dashboard display
                 if isinstance(prediction_input, dict):
@@ -539,7 +694,7 @@ class TradingBot:
         action = None # Initialize action
 
         # ========== CHECK EXITS FIRST (SL, TP, TRAILING) ==========
-        if position_info:
+        if position_info and self.market_type != 'iqoption':
             # 1. Check HARD Stop-Loss and Take-Profit
             sl_price = position_info.get('sl_price')
             tp_price = position_info.get('tp_price')
@@ -592,8 +747,12 @@ class TradingBot:
                 sl_price, tp_price = None, None # Init
 
                 try:
+                    if self.market_type == 'iqoption':
+                        base_qty = self.config.get('risk', {}).get('binary_options', {}).get('stake_amount', 10)
+                        qty = base_qty * self.martingale_multiplier
+                        sl_price, tp_price = None, None
                     # Use Forex specific ATR calculation
-                    if self.market_type in ['forex', 'synthetics'] and hasattr(self.risk_manager, 'calculate_forex_position_size') and df is not None:
+                    elif self.market_type in ['forex', 'synthetics'] and hasattr(self.risk_manager, 'calculate_forex_position_size') and df is not None:
                         atr = df['ATR'].iloc[-1]
                         qty = self.risk_manager.calculate_forex_position_size(equity, symbol, atr=atr)
                         exit_prices = self.risk_manager.get_forex_exit_prices(current_price, symbol, 'long', atr=atr)
@@ -622,8 +781,12 @@ class TradingBot:
                             'tp_price': tp_price
                         }
                         self.entry_prices[symbol] = current_price
-                        # Register with risk manager for trailing stop
-                        self.risk_manager.register_position(symbol, current_price, qty, 'long', stop_loss_price=sl_price)
+                        
+                        if self.market_type == 'iqoption':
+                            self.pending_binary_orders[order.id] = {'symbol': symbol, 'qty': qty, 'timestamp': time.time()}
+                        else:
+                            # Register with risk manager for trailing stop
+                            self.risk_manager.register_position(symbol, current_price, qty, 'long', stop_loss_price=sl_price)
                         
                         trade_record = TradeRecord(
                             timestamp=datetime.now().isoformat(),
@@ -635,6 +798,10 @@ class TradingBot:
                             notes=f"AI_ENTRY | SL: {sl_price:.4f}, TP: {tp_price:.4f}" if sl_price else "AI_ENTRY"
                         )
                         self.monitor.log_trade(trade_record)
+                    elif order and order.status == OrderStatus.REJECTED:
+                        self.monitor.logger.error(f"Order rejected for {symbol}. Possible suspension. Triggering rotation.")
+                        if self.market_type == 'iqoption':
+                            self.rotate_symbol(symbol)
 
             elif action == TradeAction.GO_SHORT:
                 self.monitor.logger.info(f"GO SHORT Signal for {symbol} at {current_price}")
@@ -646,8 +813,12 @@ class TradingBot:
                 sl_price, tp_price = None, None # Init
 
                 try:
-                     # Use Forex specific ATR calculation
-                    if self.market_type in ['forex', 'synthetics'] and hasattr(self.risk_manager, 'calculate_forex_position_size') and df is not None:
+                    if self.market_type == 'iqoption':
+                        base_qty = self.config.get('risk', {}).get('binary_options', {}).get('stake_amount', 10)
+                        qty = base_qty * self.martingale_multiplier
+                        sl_price, tp_price = None, None
+                    # Use Forex specific ATR calculation
+                    elif self.market_type in ['forex', 'synthetics'] and hasattr(self.risk_manager, 'calculate_forex_position_size') and df is not None:
                         atr = df['ATR'].iloc[-1]
                         qty = self.risk_manager.calculate_forex_position_size(equity, symbol, atr=atr)
                         exit_prices = self.risk_manager.get_forex_exit_prices(current_price, symbol, 'short', atr=atr)
@@ -675,7 +846,11 @@ class TradingBot:
                             'tp_price': tp_price
                         }
                         self.entry_prices[symbol] = current_price
-                        self.risk_manager.register_position(symbol, current_price, qty, 'short', stop_loss_price=sl_price)
+                        
+                        if self.market_type == 'iqoption':
+                            self.pending_binary_orders[order.id] = {'symbol': symbol, 'qty': qty, 'timestamp': time.time()}
+                        else:
+                            self.risk_manager.register_position(symbol, current_price, qty, 'short', stop_loss_price=sl_price)
                         
                         trade_record = TradeRecord(
                             timestamp=datetime.now().isoformat(),
@@ -687,6 +862,10 @@ class TradingBot:
                             notes=f"AI_ENTRY | SL: {sl_price:.4f}, TP: {tp_price:.4f}" if sl_price else "AI_ENTRY"
                         )
                         self.monitor.log_trade(trade_record)
+                    elif order and order.status == OrderStatus.REJECTED:
+                        self.monitor.logger.error(f"Order rejected for {symbol}. Possible suspension. Triggering rotation.")
+                        if self.market_type == 'iqoption':
+                            self.rotate_symbol(symbol)
 
             elif action == TradeAction.CLOSE_POSITION:
                 if position_info:
@@ -879,6 +1058,55 @@ class TradingBot:
                 raise e
             self.monitor.logger.error(f"Error in check_exits: {e}") 
 
+    def check_binary_outcomes(self):
+        """Asynchronously polls IQ Option for trade results to update Martingale and PnL."""
+        if self.market_type != 'iqoption' or not self.pending_binary_orders:
+            return
+            
+        completed_orders = []
+        for order_id, order_info in self.pending_binary_orders.items():
+            elapsed = time.time() - order_info['timestamp']
+            
+            # If trade has been pending for over 10 minutes, assume ghost trade / API failure
+            if elapsed > 600:
+                self.monitor.logger.error(f"[{order_info['symbol']}] Trade {order_id} timed out after 10m. API dropped. Resetting.")
+                self.martingale_multiplier = 1 # Safe reset
+                self.positions[order_info['symbol']] = None
+                self.entry_prices[order_info['symbol']] = None
+                completed_orders.append(order_id)
+                
+                # Force a websocket reconnect since it clearly died
+                try:
+                    self.executor.api.connect()
+                except:
+                    pass
+                continue
+
+            # Binary options take 2 mins. Start checking after 1.5 mins (90s).
+            if elapsed > 90:
+                result = self.executor.check_win(order_id)
+                
+                if result.get('status'):
+                    profit = result.get('profit', 0)
+                    symbol = order_info['symbol']
+                    
+                    if profit > 0:
+                        self.monitor.logger.info(f"[{symbol}] BINARY WIN (+${profit:.2f}). Resetting Martingale.")
+                        self.martingale_multiplier = 1
+                    elif profit < 0:
+                        self.monitor.logger.warning(f"[{symbol}] BINARY LOSS (${profit:.2f}). Doubling Martingale.")
+                        self.martingale_multiplier = min(self.martingale_multiplier * 2, 8)
+                    else:
+                        self.monitor.logger.info(f"[{symbol}] BINARY TIE ($0). Keeping Martingale.")
+                        
+                    self.daily_pnl += profit
+                    self.positions[symbol] = None
+                    self.entry_prices[symbol] = None
+                    completed_orders.append(order_id)
+                    
+        for oid in completed_orders:
+            del self.pending_binary_orders[oid]
+
     def start(self):
         """
         Main execution loop (Smart Loop).
@@ -931,16 +1159,26 @@ class TradingBot:
                     except Exception as e:
                         pass # self.monitor.logger.error(f"Command error: {e}")
 
+                # 1.5 Check IQ Option Connection
+                if self.market_type == 'iqoption' and hasattr(self.executor, 'api'):
+                    if not self.executor.api.check_connect():
+                        self.monitor.logger.warning("IQ Option API disconnected. Attempting to reconnect...")
+                        try:
+                            self.executor.api.connect()
+                        except Exception as e:
+                            self.monitor.logger.error(f"Reconnection failed: {e}")
+
                 # 2. Safety / Exit Checks (Every tick)
                 self.check_exits()
+                self.check_binary_outcomes()
                 
-                # 3. Main Analysis (Every 5 minutes or on startup)
-                # We use OS time to align with candles (minute 0, 5, 10...)
+                # 3. Main Analysis (Every 2 minutes or on startup)
+                # We use OS time to align with candles (minute 0, 2, 4...)
                 now = datetime.now()
-                is_candle_close = (now.minute % 5 == 0 and now.second < 5)
+                is_candle_close = (now.minute % 2 == 0 and now.second < 5)
                 # Startup condition: last_analysis_time == 0
                 is_startup = (last_analysis_time == 0)
-                is_stale = (time.time() - last_analysis_time > 300)
+                is_stale = (time.time() - last_analysis_time > 120)
                 
                 if is_candle_close or is_startup or is_stale:
                     # Debounce: Ensure we don't run multiple times in the same minute-window

@@ -1,10 +1,11 @@
 {
     "bot": {
-        "market_type": "synthetics",
+        "market_type": "iqoption",
         "paper_trading": false,
         "initial_capital": 200,
         "trading_interval_seconds": 60,
-        "seq_length": 30
+        "seq_length": 30,
+        "expiration_time_minutes": 5
     },
     "markets": {
         "stock": {
@@ -28,6 +29,11 @@
                 "Crash 500 Index",
                 "Boom 1000 Index"
             ]
+        },
+        "iqoption": {
+            "symbols": [
+                "EURUSD"
+            ]
         }
     },
     "risk": {
@@ -41,18 +47,21 @@
             "risk_per_trade_pct": 0.01,
             "stop_loss_pips": 20,
             "risk_reward_ratio": 2.0
+        },
+        "binary_options": {
+            "stake_amount": 10
         }
     },
     "model": {
-        "strategy": "any_strong_signal",
-        "type": "xgboost",
-        "path": "models/synthetics_lstm.pth",
+        "strategy": "ai",
+        "type": "lstm",
+        "path": "models/EURUSD-OTC_lstm.pth",
         "any_strong_signal": {
             "buy_threshold": 0.58,
             "sell_threshold": 0.42
         },
         "lstm": {
-            "hidden_size": 64,
+            "hidden_size": 32,
             "num_layers": 2
         },
         "xgboost": {
@@ -95,15 +104,21 @@
             "practice": true
         },
         "mt5": {
-            "enabled": true,
+            "enabled": false,
             "login": "5966845",
             "password": "Krav20#pool",
             "server": "Deriv-Demo"
         },
         "deriv": {
-            "enabled": true,
+            "enabled": false,
             "server": "demo",
-            "api_token": "c5PambAnbRrvn4J"
+            "api_token": "pat_a56302d238ba9d08386e2d472bf78660ffdb15176415280019b0ed49627447f6"
+        },
+        "iqoption": {
+            "enabled": true,
+            "email": "kaluvictor130@gmail.com",
+            "password": "Krav20#pool",
+            "account_type": "PRACTICE"
         }
     }
 }

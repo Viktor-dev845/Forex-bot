@@ -34,6 +34,7 @@ async def fetch_historical_data(symbol="R_75", time_interval="1h", max_candles=5
     # Map our interval to Deriv's granularity in seconds
     granularity_map = {
         "1m": 60,
+        "2m": 120,
         "5m": 300,
         "15m": 900,
         "1h": 3600,
@@ -45,8 +46,8 @@ async def fetch_historical_data(symbol="R_75", time_interval="1h", max_candles=5
         print(f"Error: Invalid time interval '{time_interval}'.")
         return None
 
-    # Try multiple known working app_ids
-    working_app_ids = [1089, 16929, 32404]  # Common public test app_ids
+    # Use user's custom app_id
+    working_app_ids = ["344Jxh9ST3khy7uu8Z3Ic"]
     
     connected = False
     for app_id in working_app_ids:
@@ -127,6 +128,92 @@ async def fetch_historical_data(symbol="R_75", time_interval="1h", max_candles=5
         print("Disconnected from Deriv API.")
 
 
+async def fetch_iqoption_data(symbol="EURUSD-OTC", time_interval="5m", max_candles=1000):
+    """
+    Fetches historical candle data from IQ Option.
+    """
+    try:
+        from iqoptionapi.stable_api import IQ_Option
+    except ImportError:
+        print("Error: iqoptionapi not installed. pip install iqoptionapi")
+        return None
+        
+    config = load_config()
+    iq_config = config.get('brokers', {}).get('iqoption', {})
+    email = iq_config.get('email')
+    password = iq_config.get('password')
+    
+    if not email or not password or email == 'YOUR_IQOPTION_EMAIL':
+        print("Error: IQ Option credentials not configured in config.json.")
+        return None
+        
+    api = IQ_Option(email, password)
+    status, reason = api.connect()
+    
+    if not status:
+        print(f"IQ Option Connection failed: {reason}")
+        return None
+        
+    print(f"Fetching IQ Option historical data for {symbol} ({time_interval})...")
+    
+    granularity_map = {
+        "1m": 60,
+        "2m": 120,
+        "5m": 300,
+        "15m": 900,
+        "1h": 3600,
+        "4h": 14400,
+        "1d": 86400
+    }
+    interval = granularity_map.get(time_interval, 300)
+    
+    import time
+    end_from_time = time.time()
+    
+    all_candles = []
+    candles_to_fetch = max_candles
+    
+    while candles_to_fetch > 0:
+        chunk_size = min(candles_to_fetch, 1000)
+        chunk = api.get_candles(symbol, interval, chunk_size, end_from_time)
+        if not chunk:
+            break
+            
+        all_candles.extend(chunk)
+        
+        earliest_time = chunk[0]['from']
+        end_from_time = earliest_time - 1
+        
+        candles_to_fetch -= len(chunk)
+        time.sleep(0.5) # Rate limit protection
+    
+    if not all_candles:
+        print("No candle data returned from IQ Option API.")
+        return None
+        
+    df = pd.DataFrame(all_candles)
+    df.drop_duplicates(subset=['from'], inplace=True)
+    df.sort_values('from', inplace=True)
+    
+    # IQ Option columns: 'id', 'from', 'to', 'open', 'close', 'min', 'max', 'volume'
+    if 'from' in df.columns:
+        df['Date'] = pd.to_datetime(df['from'], unit='s')
+        df.set_index('Date', inplace=True)
+        df.rename(columns={
+            'open': 'Open',
+            'max': 'High',
+            'min': 'Low',
+            'close': 'Close',
+            'volume': 'Volume'
+        }, inplace=True)
+        
+        df = df[['Open', 'High', 'Low', 'Close', 'Volume']]
+        print(f"Successfully fetched {len(df)} candles from IQ Option.")
+        return df
+    else:
+        print("Unexpected candle format from IQ Option.")
+        return None
+
 async def async_main():
     """Asynchronous main function to test the data loader."""
     config = load_config()
@@ -136,10 +223,12 @@ async def async_main():
         symbols = config.get('markets', {}).get('synthetics', {}).get('symbols', [])
         if symbols:
             await fetch_historical_data(symbol=symbols[0])
-        else:
-            print("No synthetic symbols found in config.")
+    elif market_type == 'iqoption':
+        symbols = config.get('markets', {}).get('iqoption', {}).get('symbols', [])
+        if symbols:
+            await fetch_iqoption_data(symbol=symbols[0])
     else:
-        print(f"Market type is set to '{market_type}', not 'synthetics'.")
+        print(f"Market type is set to '{market_type}', unsupported by simple test script.")
 
 
 def main():

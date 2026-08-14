@@ -28,7 +28,7 @@ class DerivExecutor:
     async def connect(self):
         """Establish connection to Deriv API."""
         try:
-            self.api = DerivAPI(app_id=1089)
+            self.api = DerivAPI(app_id="344Jxh9ST3khy7uu8Z3Ic")
             await self.api.authorize(self.api_token)
             print(f"✅ Connected to Deriv ({self.server} mode)")
             await self.update_account_info()
