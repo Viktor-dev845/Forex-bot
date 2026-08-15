@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-08-14T10:40:02.120506",
+  "timestamp": "2026-08-16T00:10:07.094150",
   "market_type": "iqoption",
   "symbols": [
     "NZDUSD-OTC"
   ],
   "account": {
-    "cash": 50.8,
-    "equity": 50.8,
+    "cash": 23.6,
+    "equity": 23.6,
     "return_pct": 0,
-    "buying_power": 50.8,
+    "buying_power": 23.6,
     "daily_pnl": 0.0
   },
   "positions": [
@@ -16,11 +16,131 @@
       "symbol": "NZDUSD-OTC",
       "qty": 10,
       "side": "short",
-      "entry_price": 0.601125,
-      "unrealized_pl": -6.01125
+      "entry_price": 0.597245,
+      "unrealized_pl": -5.97245
     }
   ],
   "trade_history": [
+    {
+      "id": 30,
+      "timestamp": "2026-08-16T00:08:04.516217",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.597245,
+      "order_id": "14169834326",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 29,
+      "timestamp": "2026-08-16T00:03:52.487065",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.593765,
+      "order_id": "14169823939",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 28,
+      "timestamp": "2026-08-15T23:42:08.625652",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.595175,
+      "order_id": "14169771742",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 27,
+      "timestamp": "2026-08-15T23:38:50.010636",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.595415,
+      "order_id": "14169763760",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 26,
+      "timestamp": "2026-08-15T23:28:48.598920",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.596425,
+      "order_id": "14169740514",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 25,
+      "timestamp": "2026-08-15T17:03:47.134641",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.581535,
+      "order_id": "14168813198",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 24,
+      "timestamp": "2026-08-15T16:53:58.685682",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.577105,
+      "order_id": "14168788690",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 23,
+      "timestamp": "2026-08-15T16:46:32.766918",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.578945,
+      "order_id": "14168771902",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 22,
+      "timestamp": "2026-08-15T16:35:51.279713",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.580965,
+      "order_id": "14168746678",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 21,
+      "timestamp": "2026-08-15T16:25:53.983007",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.578785,
+      "order_id": "14168720827",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
     {
       "id": 20,
       "timestamp": "2026-08-14T10:38:54.044679",
@@ -264,9 +384,9 @@
   ],
   "predictions": {
     "NZDUSD-OTC": {
-      "prob": 0.04993785545229912,
+      "prob": 0.001601710682734847,
       "signal": "DOWN",
-      "timestamp": "2026-08-14T10:40:01.914797"
+      "timestamp": "2026-08-16T00:10:06.694607"
     }
   },
   "latest_logs": []

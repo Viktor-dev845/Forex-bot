@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 class TradingBot:
     def __init__(self, config: dict):
         self.config = config
+        self.rejected_pairs = set()
         
         # Initialize Monitor first to capture startup events
         alert_config = config.get('alerts', {})
@@ -405,6 +406,7 @@ class TradingBot:
     def rotate_symbol(self, old_symbol: str):
         """Automatically find a new active pair, download data, train models, and swap."""
         self.monitor.logger.warning(f"Starting AUTO-PAIR ROTATION to replace suspended pair: {old_symbol}")
+        self.rejected_pairs.add(old_symbol)
         
         # 1. Manually poll for open pairs to bypass iqoptionapi get_all_open_time thread crash
         try:
@@ -415,7 +417,7 @@ class TradingBot:
             
             new_symbol = None
             for pair in backup_pairs:
-                if pair == old_symbol:
+                if pair in self.rejected_pairs:
                     continue
                 self.monitor.logger.info(f"Testing backup pair: {pair}...")
                 df = self._fetch_iqoption_data_live(pair, "2m", 5)
@@ -431,20 +433,20 @@ class TradingBot:
             
             # 2. Fetch Data
             self.monitor.logger.info(f"Fetching 50,000 candles for {new_symbol} (This may take a minute...)")
-            res = subprocess.run([sys.executable, "fetch_massive_data.py", "--symbol", new_symbol], capture_output=True, text=True)
-            if res.returncode != 0 or "Successfully collected" not in res.stdout:
-                self.monitor.logger.error(f"Failed to fetch data for {new_symbol}. stdout: {res.stdout}, stderr: {res.stderr}")
+            res = subprocess.run([sys.executable, "fetch_massive_data.py", "--symbol", new_symbol])
+            if res.returncode != 0:
+                self.monitor.logger.error(f"Failed to fetch data for {new_symbol}.")
                 return False
                 
             # 3. Train Models
-            self.monitor.logger.info(f"Training XGBoost model for {new_symbol}...")
-            res_xgb = subprocess.run([sys.executable, "train_model.py", "--symbol", new_symbol], capture_output=True, text=True)
+            self.monitor.logger.info(f"Training XGBoost model for {new_symbol} (Output streaming below)...")
+            res_xgb = subprocess.run([sys.executable, "train_model.py", "--symbol", new_symbol])
             if res_xgb.returncode != 0:
                 self.monitor.logger.error(f"XGBoost training failed for {new_symbol}.")
                 return False
                 
-            self.monitor.logger.info(f"Training LSTM model for {new_symbol}...")
-            res_lstm = subprocess.run([sys.executable, "train.py", "--ticker", new_symbol], capture_output=True, text=True)
+            self.monitor.logger.info(f"Training LSTM model for {new_symbol} (Output streaming below)...")
+            res_lstm = subprocess.run([sys.executable, "train.py", "--ticker", new_symbol])
             if res_lstm.returncode != 0:
                 self.monitor.logger.error(f"LSTM training failed for {new_symbol}.")
                 return False
@@ -462,10 +464,6 @@ class TradingBot:
             if old_symbol in self.positions:
                 del self.positions[old_symbol]
             self.positions[new_symbol] = None
-            
-            if old_symbol in self.daily_pnl:
-                del self.daily_pnl[old_symbol]
-            self.daily_pnl[new_symbol] = 0.0
             
             # Load new models
             self.models[new_symbol] = {
@@ -680,7 +678,15 @@ class TradingBot:
 
                     self.execute_strategy(symbol, prediction_input, current_price, trend_context=trend_context, df=df)
                 else:
-                    self.execute_strategy(symbol, prediction_input, current_price, df=df)
+                    # Calculate M2 Trend Context dynamically
+                    trend_context = None
+                    if df is not None and not df.empty and len(df) > 49:
+                        sma_50 = df['Close'].rolling(window=50).mean().iloc[-1]
+                        current_c = df['Close'].iloc[-1]
+                        trend_context = 'UP' if current_c > sma_50 else 'DOWN'
+                        self.monitor.logger.info(f"[{symbol}] Micro-Trend Context: {trend_context}")
+                    
+                    self.execute_strategy(symbol, prediction_input, current_price, trend_context=trend_context, df=df)
 
 
         # 5. Save state for dashboard
@@ -1063,49 +1069,48 @@ class TradingBot:
         if self.market_type != 'iqoption' or not self.pending_binary_orders:
             return
             
+        import time
         completed_orders = []
         for order_id, order_info in self.pending_binary_orders.items():
             elapsed = time.time() - order_info['timestamp']
             
-            # If trade has been pending for over 10 minutes, assume ghost trade / API failure
-            if elapsed > 600:
-                self.monitor.logger.error(f"[{order_info['symbol']}] Trade {order_id} timed out after 10m. API dropped. Resetting.")
-                self.martingale_multiplier = 1 # Safe reset
-                self.positions[order_info['symbol']] = None
-                self.entry_prices[order_info['symbol']] = None
+            # Binary options expire in exactly 120s. We force-clear the position at 125s.
+            if elapsed > 125:
+                symbol = order_info['symbol']
+                qty = order_info['qty']
+                
+                # FORCE CLEAR POSITION ON MAIN THREAD SO IT CAN TAKE NEW TRADES INSTANTLY
+                if symbol in self.positions:
+                    self.positions[symbol] = None
+                self.entry_prices[symbol] = None
                 completed_orders.append(order_id)
                 
-                # Force a websocket reconnect since it clearly died
-                try:
-                    self.executor.api.connect()
-                except:
-                    pass
-                continue
-
-            # Binary options take 2 mins. Start checking after 1.5 mins (90s).
-            if elapsed > 90:
-                result = self.executor.check_win(order_id)
+                # Offload buggy IQ Option API check to a fire-and-forget background thread
+                def _bg_check(oid, sym, amount):
+                    try:
+                        # Fallback to the strict check_win_v3 which blocks but gets the result
+                        res, prof = self.executor.api.check_win_v3(int(oid))
+                        if res == 'win':
+                            self.monitor.logger.info(f"[{sym}] BINARY WIN (+${prof:.2f}). Resetting Martingale.")
+                            self.martingale_multiplier = 1
+                            self.daily_pnl += prof
+                        elif res == 'equal':
+                            self.monitor.logger.info(f"[{sym}] BINARY TIE ($0). Keeping Martingale.")
+                        else:
+                            self.monitor.logger.warning(f"[{sym}] BINARY LOSS (-${amount:.2f}). Doubling Martingale.")
+                            self.martingale_multiplier = min(self.martingale_multiplier * 2.0, 8.0)
+                            self.daily_pnl -= amount
+                    except Exception:
+                        pass
                 
-                if result.get('status'):
-                    profit = result.get('profit', 0)
-                    symbol = order_info['symbol']
-                    
-                    if profit > 0:
-                        self.monitor.logger.info(f"[{symbol}] BINARY WIN (+${profit:.2f}). Resetting Martingale.")
-                        self.martingale_multiplier = 1
-                    elif profit < 0:
-                        self.monitor.logger.warning(f"[{symbol}] BINARY LOSS (${profit:.2f}). Doubling Martingale.")
-                        self.martingale_multiplier = min(self.martingale_multiplier * 2, 8)
-                    else:
-                        self.monitor.logger.info(f"[{symbol}] BINARY TIE ($0). Keeping Martingale.")
-                        
-                    self.daily_pnl += profit
-                    self.positions[symbol] = None
-                    self.entry_prices[symbol] = None
-                    completed_orders.append(order_id)
+                import threading
+                t = threading.Thread(target=_bg_check, args=(order_id, symbol, qty))
+                t.daemon = True
+                t.start()
                     
         for oid in completed_orders:
-            del self.pending_binary_orders[oid]
+            if oid in self.pending_binary_orders:
+                del self.pending_binary_orders[oid]
 
     def start(self):
         """

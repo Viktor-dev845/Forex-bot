@@ -26,7 +26,7 @@ class AIStrategy(BaseStrategy):
         self.long_exit_threshold = 0.5
         self.short_exit_threshold = 0.5
 
-    def get_decision(self, prediction: float, position_info: dict, symbol: str = None) -> TradeAction:
+    def get_decision(self, prediction: float, position_info: dict, symbol: str = None, trend_context: str = None) -> TradeAction:
         has_position = position_info is not None
         
         if has_position:
@@ -50,6 +50,15 @@ class AIStrategy(BaseStrategy):
                     return TradeAction.DO_NOTHING # Block Buy on Boom
                 if "CRASH" in sym_upper and action == TradeAction.GO_SHORT:
                     return TradeAction.DO_NOTHING # Block Sell on Crash
+                    
+            # Apply Trend Filter (Do not trade against the trend)
+            if trend_context:
+                if trend_context == 'UP' and action == TradeAction.GO_SHORT:
+                    logging.getLogger(__name__).warning(f"Blocked counter-trend SHORT trade on {symbol} (Market is UP)")
+                    return TradeAction.DO_NOTHING
+                if trend_context == 'DOWN' and action == TradeAction.GO_LONG:
+                    logging.getLogger(__name__).warning(f"Blocked counter-trend LONG trade on {symbol} (Market is DOWN)")
+                    return TradeAction.DO_NOTHING
             
             return action
         
