@@ -9,7 +9,8 @@ plotly
 torch
 xgboost
 ta
-
 python-dotenv
 MetaTrader5 ; sys_platform == 'win32'
 iqoptionapi
+websocket-client
+streamlit

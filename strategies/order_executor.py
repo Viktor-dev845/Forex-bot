@@ -1167,13 +1167,7 @@ class IQOptionExecutor(OrderExecutor):
 
     def __init__(self, email, password, account_type="PRACTICE"):
 
-        try:
-
-            from iqoptionapi.stable_api import IQ_Option
-
-        except ImportError:
-
-            raise ImportError("Please install iqoptionapi: pip install iqoptionapi")
+        from iqoptionapi.stable_api import IQ_Option
 
         
 

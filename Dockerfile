@@ -29,7 +29,8 @@ ENV PYTHONUNBUFFERED=1
 # Command to run bot AND dashboard (using a shell script or supervisor would be better, but simple approaches first)
 # For now, we will just run the bot. The dashboard can be run in a separate container or background.
 # Let's create a startup script.
-RUN echo "#!/bin/bash\nstreamlit run dashboard.py & python trading_bot.py" > start.sh
+RUN echo '#!/bin/bash' > start.sh && \
+    echo 'streamlit run dashboard.py --server.port="${PORT:-8501}" --server.address=0.0.0.0 & python trading_bot.py' >> start.sh
 RUN chmod +x start.sh
 
 CMD ["./start.sh"]
