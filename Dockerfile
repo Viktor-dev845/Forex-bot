@@ -1,5 +1,5 @@
 # Use official Python runtime as a parent image
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Set timezone to UTC
 ENV TZ=UTC

@@ -3,13 +3,13 @@ pandas
 numpy
 scikit-learn
 joblib
-deriv-api
+python-deriv-api
 websockets>=12.0
 plotly
 torch
 xgboost
 ta
-deriv_api
+
 python-dotenv
 MetaTrader5 ; sys_platform == 'win32'
 iqoptionapi
