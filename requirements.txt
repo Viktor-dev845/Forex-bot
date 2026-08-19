@@ -11,6 +11,6 @@ xgboost
 ta
 python-dotenv
 MetaTrader5 ; sys_platform == 'win32'
-iqoptionapi
+git+https://github.com/iqoptionapi/iqoptionapi.git
 websocket-client
 streamlit
