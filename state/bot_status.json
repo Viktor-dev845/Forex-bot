@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-08-16T00:10:07.094150",
+  "timestamp": "2026-08-16T00:23:52.456179",
   "market_type": "iqoption",
   "symbols": [
     "NZDUSD-OTC"
   ],
   "account": {
-    "cash": 23.6,
-    "equity": 23.6,
+    "cash": 3.6,
+    "equity": 3.6,
     "return_pct": 0,
-    "buying_power": 23.6,
+    "buying_power": 3.6,
     "daily_pnl": 0.0
   },
   "positions": [
@@ -16,11 +16,35 @@
       "symbol": "NZDUSD-OTC",
       "qty": 10,
       "side": "short",
-      "entry_price": 0.597245,
-      "unrealized_pl": -5.97245
+      "entry_price": 0.595105,
+      "unrealized_pl": -5.95105
     }
   ],
   "trade_history": [
+    {
+      "id": 32,
+      "timestamp": "2026-08-16T00:23:47.426413",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.595105,
+      "order_id": "14169870746",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 31,
+      "timestamp": "2026-08-16T00:19:33.616169",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.596435,
+      "order_id": "14169860623",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
     {
       "id": 30,
       "timestamp": "2026-08-16T00:08:04.516217",
@@ -384,9 +408,9 @@
   ],
   "predictions": {
     "NZDUSD-OTC": {
-      "prob": 0.001601710682734847,
+      "prob": 0.0016224834835156798,
       "signal": "DOWN",
-      "timestamp": "2026-08-16T00:10:06.694607"
+      "timestamp": "2026-08-16T00:23:46.045405"
     }
   },
   "latest_logs": []

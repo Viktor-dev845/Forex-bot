@@ -46,19 +46,22 @@ class AIStrategy(BaseStrategy):
             # Apply Safety Filter
             if symbol:
                 sym_upper = symbol.upper()
-                if "BOOM" in sym_upper and action == TradeAction.GO_LONG:
-                    return TradeAction.DO_NOTHING # Block Buy on Boom
-                if "CRASH" in sym_upper and action == TradeAction.GO_SHORT:
-                    return TradeAction.DO_NOTHING # Block Sell on Crash
-                    
-            # Apply Trend Filter (Do not trade against the trend)
+            # Apply Smart Trend Filter (Confidence Scaling)
+            # Instead of a blind block, we require massive confidence (>75%) to trade against the trend!
             if trend_context:
                 if trend_context == 'UP' and action == TradeAction.GO_SHORT:
-                    logging.getLogger(__name__).warning(f"Blocked counter-trend SHORT trade on {symbol} (Market is UP)")
-                    return TradeAction.DO_NOTHING
+                    if prediction > 0.25: # Needs to be VERY strongly predicting DOWN (< 0.25)
+                        logging.getLogger(__name__).warning(f"Blocked weak counter-trend SHORT trade on {symbol} (Conf={1-prediction:.0%}). Waiting for stronger overbought signal.")
+                        return TradeAction.DO_NOTHING
+                    else:
+                        logging.getLogger(__name__).info(f"Allowed EXTREME overbought counter-trend SHORT on {symbol} (Conf={1-prediction:.0%})")
+                
                 if trend_context == 'DOWN' and action == TradeAction.GO_LONG:
-                    logging.getLogger(__name__).warning(f"Blocked counter-trend LONG trade on {symbol} (Market is DOWN)")
-                    return TradeAction.DO_NOTHING
+                    if prediction < 0.75: # Needs to be VERY strongly predicting UP (> 0.75)
+                        logging.getLogger(__name__).warning(f"Blocked weak counter-trend LONG trade on {symbol} (Conf={prediction:.0%}). Waiting for stronger oversold signal.")
+                        return TradeAction.DO_NOTHING
+                    else:
+                        logging.getLogger(__name__).info(f"Allowed EXTREME oversold counter-trend LONG on {symbol} (Conf={prediction:.0%})")
             
             return action
         

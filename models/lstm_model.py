@@ -63,7 +63,7 @@ class TradingLSTM(nn.Module):
         return prediction
 
 
-def create_sequences(data, seq_length=10, target_col_index=3, threshold=0.15):
+def create_sequences(data, seq_length=10, target_col_index=3, threshold=0.0001):
     """
     Creates sequences for LSTM training (regression).
     

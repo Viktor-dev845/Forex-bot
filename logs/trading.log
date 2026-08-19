@@ -10857,3 +10857,48 @@ RuntimeError: input.size(-1) must be equal to input_size. Expected 57, got 70
 2026-08-16 00:10:00 | INFO     | trading_bot | [BALANCE] Current Account Balance: $23.60 (Daily PnL: +0.00)
 2026-08-16 00:10:06 | INFO     | trading_bot | Model Prediction for NZDUSD-OTC: 0.16% (DOWN)
 2026-08-16 00:10:27 | INFO     | trading_bot | Bot stopped by user
+2026-08-16 00:19:23 | INFO     | trading_bot | Bot monitoring system initialized (SQLite Enabled)
+2026-08-16 00:19:23 | INFO     | trading_bot | Initializing Trading Bot...
+2026-08-16 00:19:27 | INFO     | trading_bot | Using IQ Option Executor
+2026-08-16 00:19:27 | INFO     | trading_bot | Loading models for NZDUSD-OTC...
+2026-08-16 00:19:27 | INFO     | trading_bot | [NZDUSD-OTC] LSTM Model loaded from models/NZDUSD-OTC_lstm.pth
+2026-08-16 00:19:27 | INFO     | trading_bot | [NZDUSD-OTC] XGBoost Model loaded from models/NZDUSD-OTC_xgboost.json
+2026-08-16 00:19:27 | INFO     | trading_bot | Using AI Strategy
+2026-08-16 00:19:30 | INFO     | trading_bot | [SUCCESS] IQ Option WebSocket streaming enabled
+2026-08-16 00:19:30 | INFO     | trading_bot | Bot initialized for ['NZDUSD-OTC'] (Paper trading)
+2026-08-16 00:19:30 | INFO     | trading_bot | [BALANCE] Current Account Balance: $23.60
+2026-08-16 00:19:30 | INFO     | trading_bot | Restoring positions from state file...
+2026-08-16 00:19:30 | INFO     | trading_bot |   - Restored: short 10 NZDUSD-OTC @ 0.597245
+2026-08-16 00:19:30 | INFO     | trading_bot | Restored daily PnL of 0.00 from today.
+2026-08-16 00:19:30 | INFO     | trading_bot | Reconciling state with broker...
+2026-08-16 00:19:30 | INFO     | trading_bot | No open positions found at broker.
+2026-08-16 00:19:30 | WARNING  | trading_bot | Local state had positions not found at broker. Clearing local state.
+2026-08-16 00:19:30 | INFO     | trading_bot | Bot started in Smart Loop Mode. Ticking every 1s...
+2026-08-16 00:19:30 | INFO     | trading_bot | Triggering Analysis Cycle at 00:19:30
+2026-08-16 00:19:30 | INFO     | trading_bot | Trading Cycle - 2026-08-16 00:19:30
+2026-08-16 00:19:31 | INFO     | trading_bot | [BALANCE] Current Account Balance: $23.60 (Daily PnL: +0.00)
+2026-08-16 00:19:32 | INFO     | trading_bot | Model Prediction for NZDUSD-OTC: 0.16% (DOWN)
+2026-08-16 00:19:32 | INFO     | trading_bot | [NZDUSD-OTC] Micro-Trend Context: UP
+2026-08-16 00:19:32 | INFO     | trading_bot | GO SHORT Signal for NZDUSD-OTC at 0.596435
+2026-08-16 00:19:33 | INFO     | trading_bot.alerts | ALERT: Trade Executed: SELL NZDUSD-OTC - Executed SELL order: 10 NZDUSD-OTC @ $0.60
+2026-08-16 00:19:36 | INFO     | trading_bot.alerts | Email alert sent: Trade Executed: SELL NZDUSD-OTC
+2026-08-16 00:21:37 | INFO     | trading_bot | Triggering Analysis Cycle at 00:21:37
+2026-08-16 00:21:37 | INFO     | trading_bot | Trading Cycle - 2026-08-16 00:21:37
+2026-08-16 00:21:37 | INFO     | trading_bot | [BALANCE] Current Account Balance: $13.60 (Daily PnL: +0.00)
+2026-08-16 00:21:38 | INFO     | trading_bot | Model Prediction for NZDUSD-OTC: 0.16% (DOWN)
+2026-08-16 00:21:38 | INFO     | trading_bot | [NZDUSD-OTC] Micro-Trend Context: UP
+2026-08-16 00:23:39 | INFO     | trading_bot | Triggering Analysis Cycle at 00:23:39
+2026-08-16 00:23:39 | INFO     | trading_bot | Trading Cycle - 2026-08-16 00:23:39
+2026-08-16 00:23:39 | INFO     | trading_bot | [BALANCE] Current Account Balance: $13.60 (Daily PnL: +0.00)
+2026-08-16 00:23:46 | INFO     | trading_bot | Model Prediction for NZDUSD-OTC: 0.16% (DOWN)
+2026-08-16 00:23:46 | INFO     | trading_bot | [NZDUSD-OTC] Micro-Trend Context: UP
+2026-08-16 00:23:46 | INFO     | trading_bot | GO SHORT Signal for NZDUSD-OTC at 0.595105
+2026-08-16 00:23:47 | INFO     | trading_bot.alerts | ALERT: Trade Executed: SELL NZDUSD-OTC - Executed SELL order: 10 NZDUSD-OTC @ $0.60
+2026-08-16 00:23:52 | INFO     | trading_bot.alerts | Email alert sent: Trade Executed: SELL NZDUSD-OTC
+2026-08-16 00:25:54 | INFO     | trading_bot | Triggering Analysis Cycle at 00:25:53
+2026-08-16 00:25:54 | INFO     | trading_bot | Trading Cycle - 2026-08-16 00:25:54
+2026-08-16 00:25:55 | INFO     | trading_bot | [BALANCE] Current Account Balance: $3.60 (Daily PnL: +0.00)
+2026-08-16 00:26:08 | INFO     | trading_bot | Model Prediction for NZDUSD-OTC: 0.16% (DOWN)
+2026-08-16 00:26:08 | INFO     | trading_bot | [NZDUSD-OTC] Micro-Trend Context: UP
+2026-08-16 00:26:09 | INFO     | trading_bot | GO SHORT Signal for NZDUSD-OTC at 0.595875
+2026-08-16 00:26:10 | INFO     | trading_bot | Bot stopped by user
