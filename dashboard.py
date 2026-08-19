@@ -226,33 +226,33 @@ with col_side:
     pred_dir = "UP"
     
     ai_html = f"""
-    <div class="glass-card">
-        <h4 style="margin-top:0; color:var(--primary-color);">CURRENT TARGET</h4>
-        <h2 style="margin: 5px 0;">{current_pair}</h2>
-        <hr style="border-color:rgba(255,255,255,0.1); margin: 15px 0;" />
-        
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <span style="color:var(--text-secondary); font-size:0.85rem;">LONG PROBABILITY</span>
-            <span style="color:var(--neon-green); font-weight:bold;">{confidence}%</span>
-        </div>
-        <div class="ai-bar-container">
-            <div class="ai-bar-fill ai-up" style="width: {confidence}%;"></div>
-        </div>
-        
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px; margin-top:15px;">
-            <span style="color:var(--text-secondary); font-size:0.85rem;">SHORT PROBABILITY</span>
-            <span style="color:var(--neon-red); font-weight:bold;">{100 - confidence:.1f}%</span>
-        </div>
-        <div class="ai-bar-container">
-            <div class="ai-bar-fill ai-down" style="width: {100 - confidence}%;"></div>
-        </div>
-        
-        <hr style="border-color:rgba(255,255,255,0.1); margin: 15px 0;" />
-        <div style="text-align:center;">
-            <span class="status-badge status-warning">🤖 NEURAL NET ACTIVE</span>
-        </div>
+<div class="glass-card">
+    <h4 style="margin-top:0; color:var(--primary-color);">CURRENT TARGET</h4>
+    <h2 style="margin: 5px 0;">{current_pair}</h2>
+    <hr style="border-color:rgba(255,255,255,0.1); margin: 15px 0;" />
+    
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <span style="color:var(--text-secondary); font-size:0.85rem;">LONG PROBABILITY</span>
+        <span style="color:var(--neon-green); font-weight:bold;">{confidence}%</span>
     </div>
-    """
+    <div class="ai-bar-container">
+        <div class="ai-bar-fill ai-up" style="width: {confidence}%;"></div>
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px; margin-top:15px;">
+        <span style="color:var(--text-secondary); font-size:0.85rem;">SHORT PROBABILITY</span>
+        <span style="color:var(--neon-red); font-weight:bold;">{100 - confidence:.1f}%</span>
+    </div>
+    <div class="ai-bar-container">
+        <div class="ai-bar-fill ai-down" style="width: {100 - confidence}%;"></div>
+    </div>
+    
+    <hr style="border-color:rgba(255,255,255,0.1); margin: 15px 0;" />
+    <div style="text-align:center;">
+        <span class="status-badge status-warning">🤖 NEURAL NET ACTIVE</span>
+    </div>
+</div>
+"""
     st.markdown(ai_html, unsafe_allow_html=True)
     
     # Win / Loss Donut Chart
