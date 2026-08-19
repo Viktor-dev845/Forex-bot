@@ -116,28 +116,46 @@ with col_left:
     
     # Smooth Equity Curve (Electric Blue)
     if not df_trades.empty and 'pnl' in df_trades.columns:
-        df_sorted = df_trades.sort_values(by='id')
+        # Ensure we have a proper datetime index for the x-axis
+        if 'timestamp' in df_trades.columns:
+            df_trades['timestamp'] = pd.to_datetime(df_trades['timestamp'], errors='coerce')
+            df_sorted = df_trades.dropna(subset=['timestamp']).sort_values(by='timestamp').copy()
+            df_sorted.set_index('timestamp', inplace=True)
+        else:
+            df_sorted = df_trades.copy()
+
+        # Handle NaNs in PnL
+        df_sorted['pnl'] = pd.to_numeric(df_sorted['pnl'], errors='coerce').fillna(0.0)
         df_sorted['cumulative'] = df_sorted['pnl'].cumsum() + initial_cap
         
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=df_sorted.index,
-            y=df_sorted['cumulative'],
-            mode='lines',
-            line=dict(color='#4C7CFF', width=3, shape='spline'), # Spline for smooth curve like template
-            fill='tozeroy',
-            fillcolor='rgba(76, 124, 255, 0.05)', # Very faint gradient
-            name='Portfolio Value'
-        ))
-        fig.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            margin=dict(l=0, r=0, t=10, b=0),
-            height=300,
-            xaxis=dict(showgrid=False, showticklabels=False),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.03)', tickfont=dict(color='#8A94A6'))
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        # We need at least a starting point to draw a line properly
+        if len(df_sorted) > 0:
+            # Prepend starting capital to make the line start from the beginning
+            start_time = df_sorted.index[0] - pd.Timedelta(minutes=5) if isinstance(df_sorted.index, pd.DatetimeIndex) else -1
+            start_row = pd.DataFrame({'cumulative': [initial_cap]}, index=[start_time])
+            df_plot = pd.concat([start_row, df_sorted[['cumulative']]])
+            
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=df_plot.index,
+                y=df_plot['cumulative'],
+                mode='lines',
+                line=dict(color='#4C7CFF', width=3, shape='spline'), # Spline for smooth curve like template
+                fill='tozeroy',
+                fillcolor='rgba(76, 124, 255, 0.05)', # Very faint gradient
+                name='Portfolio Value'
+            ))
+            fig.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=0, r=0, t=10, b=0),
+                height=300,
+                xaxis=dict(showgrid=False, showticklabels=False),
+                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.03)', tickfont=dict(color='#8A94A6', family='JetBrains Mono'))
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No valid trade timestamps found.")
     else:
         st.info("Not enough trade data yet to build equity curve.")
 

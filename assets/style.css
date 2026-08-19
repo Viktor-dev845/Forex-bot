@@ -18,20 +18,24 @@
 }
 
 /* --- STREAMLIT OVERRIDES --- */
-.stApp {
+/* Target the actual app view container to ensure background color applies */
+[data-testid="stAppViewContainer"], [data-testid="stApp"] {
     background-color: var(--bg-main) !important;
     background-image: none !important;
-    color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
+    color: var(--text-primary) !important;
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* Sidebar styling */
-section[data-testid="stSidebar"] {
+[data-testid="stSidebar"] {
     background-color: #13171f !important;
     border-right: 1px solid var(--card-border) !important;
 }
 
 /* Hide top padding */
+[data-testid="stHeader"] {
+    display: none !important;
+}
 .block-container {
     padding-top: 1.5rem !important;
     padding-bottom: 2rem !important;
