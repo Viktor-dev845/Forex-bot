@@ -390,7 +390,17 @@ class TradingBot:
             granularity_map = {"1m": 60, "2m": 120, "5m": 300, "15m": 900}
             interval = granularity_map.get(time_interval, 120)
             import time
-            candles = self.executor.api.get_candles(symbol, interval, max_candles, time.time())
+            import concurrent.futures
+            
+            # Wrap the blocking IQ Option API call in a thread with a 10-second timeout
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(self.executor.api.get_candles, symbol, interval, max_candles, time.time())
+                try:
+                    candles = future.result(timeout=10)
+                except concurrent.futures.TimeoutError:
+                    self.monitor.logger.error(f"Timeout while fetching candles for {symbol}")
+                    return None
+                    
             if not candles:
                 return None
             df = pd.DataFrame(candles)
@@ -933,6 +943,15 @@ class TradingBot:
                         "unrealized_pl": (account.get(sym, {}).get('price', 0) - self.entry_prices.get(sym, 0)) * pos['qty'] if self.entry_prices.get(sym) else 0
                     })
 
+            # Read recent logs
+            latest_logs = []
+            try:
+                if os.path.exists('logs/trading.log'):
+                    with open('logs/trading.log', 'r') as log_f:
+                        latest_logs = log_f.readlines()[-20:]
+            except Exception:
+                pass
+                
             state = {
                 "timestamp": datetime.now().isoformat(),
                 "market_type": self.market_type,
@@ -947,7 +966,7 @@ class TradingBot:
                 "positions": pos_list,
                 "trade_history": self.monitor.get_recent_trades(50), 
                 "predictions": self.last_prediction,
-                "latest_logs": [] 
+                "latest_logs": latest_logs 
             }
             
             with open(f'{state_dir}/bot_status.json', 'w') as f:

@@ -210,6 +210,21 @@ with col_main:
     else:
         st.info("No trades executed yet.")
 
+    st.markdown("### 🖥️ System Terminal")
+    st.markdown("<div style='font-size:0.85rem; color:var(--text-secondary); margin-bottom:10px;'>Live execution logs from the Neural Trading Core</div>", unsafe_allow_html=True)
+    
+    logs = state.get('latest_logs', [])
+    if logs:
+        # Format logs to look like a terminal
+        log_text = "".join(logs)
+        st.markdown(f"""
+        <div style="background-color:#020205; border:1px solid var(--border-color); border-radius:8px; padding:15px; font-family:'JetBrains Mono', monospace; font-size:0.8rem; color:#00f2fe; height:250px; overflow-y:auto; box-shadow:inset 0 0 10px rgba(0,0,0,0.5);">
+            <pre style="margin:0; white-space:pre-wrap; word-wrap:break-word; color:#00f2fe; background:transparent; border:none; padding:0;">{log_text}</pre>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.info("System logs are currently empty. Awaiting bot activity.")
+
 
 with col_side:
     st.markdown("### 🧠 AI Neural Engine")
