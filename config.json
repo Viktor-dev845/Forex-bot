@@ -32,7 +32,7 @@
         },
         "iqoption": {
             "symbols": [
-                "NZDUSD-OTC"
+                "EURGBP"
             ]
         }
     },
@@ -42,7 +42,7 @@
         "stop_loss_pct": 0.02,
         "take_profit_pct": 0.04,
         "max_open_positions": 3,
-        "min_confidence": 0.51,
+        "min_confidence": 0.58,
         "forex_risk": {
             "risk_per_trade_pct": 0.01,
             "stop_loss_pips": 20,
@@ -53,7 +53,7 @@
         }
     },
     "model": {
-        "strategy": "ai",
+        "strategy": "ensemble",
         "type": "lstm",
         "path": "models/EURUSD-OTC_lstm.pth",
         "any_strong_signal": {

@@ -1,26 +1,210 @@
 {
-  "timestamp": "2026-08-16T00:23:52.456179",
+  "timestamp": "2026-08-21T10:05:26.552903",
   "market_type": "iqoption",
   "symbols": [
-    "NZDUSD-OTC"
+    "EURGBP"
   ],
   "account": {
-    "cash": 3.6,
-    "equity": 3.6,
+    "cash": 69,
+    "equity": 69,
     "return_pct": 0,
-    "buying_power": 3.6,
+    "buying_power": 69,
     "daily_pnl": 0.0
   },
-  "positions": [
-    {
-      "symbol": "NZDUSD-OTC",
-      "qty": 10,
-      "side": "short",
-      "entry_price": 0.595105,
-      "unrealized_pl": -5.95105
-    }
-  ],
+  "positions": [],
   "trade_history": [
+    {
+      "id": 48,
+      "timestamp": "2026-08-20T14:41:23.204461",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.598135,
+      "order_id": "14183676496",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 47,
+      "timestamp": "2026-08-20T14:36:41.566114",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.598395,
+      "order_id": "14183665925",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 46,
+      "timestamp": "2026-08-20T14:32:38.833976",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.598025,
+      "order_id": "14183657108",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 45,
+      "timestamp": "2026-08-20T14:26:11.584992",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.604065,
+      "order_id": "14183641776",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 44,
+      "timestamp": "2026-08-20T14:22:48.150281",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.604455,
+      "order_id": "14183633955",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 43,
+      "timestamp": "2026-08-20T14:18:31.137924",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.603525,
+      "order_id": "14183623898",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 42,
+      "timestamp": "2026-08-20T14:14:25.280380",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.605875,
+      "order_id": "14183615165",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 41,
+      "timestamp": "2026-08-20T14:10:07.814765",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.603975,
+      "order_id": "14183605384",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 40,
+      "timestamp": "2026-08-20T14:07:43.060549",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.603025,
+      "order_id": "14183599344",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 39,
+      "timestamp": "2026-08-20T14:05:20.160371",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.603305,
+      "order_id": "14183593754",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 38,
+      "timestamp": "2026-08-19T23:54:21.555997",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.637945,
+      "order_id": "14182000252",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 37,
+      "timestamp": "2026-08-19T23:50:32.964843",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.639135,
+      "order_id": "14181990953",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 36,
+      "timestamp": "2026-08-19T23:46:21.402629",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.642135,
+      "order_id": "14181982273",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 35,
+      "timestamp": "2026-08-19T23:42:14.811366",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.640165,
+      "order_id": "14181974232",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 34,
+      "timestamp": "2026-08-19T23:38:06.933229",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.639505,
+      "order_id": "14181965013",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
+    {
+      "id": 33,
+      "timestamp": "2026-08-19T23:34:58.409304",
+      "symbol": "NZDUSD-OTC",
+      "side": "SELL",
+      "quantity": 10.0,
+      "price": 0.639155,
+      "order_id": "14181957980",
+      "pnl": null,
+      "notes": "AI_ENTRY",
+      "strategy": "AI"
+    },
     {
       "id": 32,
       "timestamp": "2026-08-16T00:23:47.426413",
@@ -407,11 +591,45 @@
     }
   ],
   "predictions": {
-    "NZDUSD-OTC": {
-      "prob": 0.0016224834835156798,
+    "EURAUD": {
+      "prob": 0.3934067040681839,
       "signal": "DOWN",
-      "timestamp": "2026-08-16T00:23:46.045405"
+      "timestamp": "2026-08-21T09:52:50.120317",
+      "ensemble": {
+        "lstm": 0.32276031374931335,
+        "xgboost": 0.46405309438705444
+      }
+    },
+    "EURGBP": {
+      "prob": 0.5266479849815369,
+      "signal": "UP",
+      "timestamp": "2026-08-21T10:05:26.250331",
+      "ensemble": {
+        "xgboost": 0.5150282382965088,
+        "lstm": 0.5382677316665649
+      }
     }
   },
-  "latest_logs": []
+  "latest_logs": [
+    "2026-08-21 09:52:48 | INFO     | trading_bot | Trading Cycle - 2026-08-21 09:52:48\n",
+    "2026-08-21 09:52:48 | INFO     | trading_bot | [BALANCE] Current Account Balance: $69.00 (Daily PnL: +0.00)\n",
+    "2026-08-21 09:52:50 | INFO     | trading_bot | Ensemble Predictions for EURAUD: {'lstm': '32.28%', 'xgboost': '46.41%'} (Weights: {'xgboost': '50.0%', 'lstm': '50.0%'})\n",
+    "2026-08-21 09:52:50 | INFO     | trading_bot | [EURAUD] Micro-Trend Context: DOWN\n",
+    "2026-08-21 09:52:50 | INFO     | trading_bot | GO SHORT Signal for EURAUD at 1.63471\n",
+    "2026-08-21 09:52:50 | ERROR    | trading_bot | Order rejected for EURAUD. Possible suspension. Triggering rotation.\n",
+    "2026-08-21 09:52:50 | WARNING  | trading_bot | Starting AUTO-PAIR ROTATION to replace suspended pair: EURAUD\n",
+    "2026-08-21 09:52:50 | INFO     | trading_bot | Testing backup pair: EURGBP...\n",
+    "2026-08-21 09:52:50 | INFO     | trading_bot | Selected new pair: EURGBP\n",
+    "2026-08-21 09:52:50 | INFO     | trading_bot | Fetching 50,000 candles for EURGBP (This may take a minute...)\n",
+    "2026-08-21 09:53:47 | INFO     | trading_bot | Training XGBoost model for EURGBP (Output streaming below)...\n",
+    "2026-08-21 09:57:40 | INFO     | trading_bot | Training LSTM model for EURGBP (Output streaming below)...\n",
+    "2026-08-21 10:03:24 | INFO     | trading_bot | [EURGBP] XGBoost Model loaded from models/EURGBP_xgboost.json\n",
+    "2026-08-21 10:03:24 | INFO     | trading_bot | [EURGBP] LSTM Model loaded from models/EURGBP_lstm.pth\n",
+    "2026-08-21 10:03:24 | INFO     | trading_bot | SUCCESS: Auto-Pair Rotation complete. Now trading EURGBP!\n",
+    "2026-08-21 10:05:24 | INFO     | trading_bot | Triggering Analysis Cycle at 10:05:24\n",
+    "2026-08-21 10:05:24 | INFO     | trading_bot | Trading Cycle - 2026-08-21 10:05:24\n",
+    "2026-08-21 10:05:25 | INFO     | trading_bot | [BALANCE] Current Account Balance: $69.00 (Daily PnL: +0.00)\n",
+    "2026-08-21 10:05:26 | INFO     | trading_bot | Ensemble Predictions for EURGBP: {'xgboost': '51.50%', 'lstm': '53.83%'} (Weights: {'xgboost': '50.0%', 'lstm': '50.0%'})\n",
+    "2026-08-21 10:05:26 | INFO     | trading_bot | [EURGBP] Micro-Trend Context: DOWN\n"
+  ]
 }

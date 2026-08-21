@@ -76,8 +76,17 @@ class RetrainingManager:
             self.trade_history[symbol] = deque(maxlen=50) # Look at last 50 trades
             self.is_training[symbol] = False
             
-        is_win = 1 if pnl > 0 else 0
-        self.trade_history[symbol].append(is_win)
+        # Track consecutive losses for rapid adaptation
+        if symbol not in getattr(self, 'consecutive_losses', {}):
+            if not hasattr(self, 'consecutive_losses'):
+                self.consecutive_losses = {}
+            self.consecutive_losses[symbol] = 0
+            
+        if is_win:
+            self.consecutive_losses[symbol] = 0
+        else:
+            self.consecutive_losses[symbol] += 1
+            self.logger.warning(f"[{symbol}] Consecutive Losses: {self.consecutive_losses[symbol]}")
         
         # Log current stats
         win_rate = sum(self.trade_history[symbol]) / len(self.trade_history[symbol])
@@ -88,19 +97,29 @@ class RetrainingManager:
 
     def _check_and_trigger(self, symbol: str, win_rate: float):
         """Check criteria and trigger retraining if needed."""
-        if len(self.trade_history[symbol]) < self.min_trades:
-            return
-            
         if self.is_training.get(symbol, False):
             return
-
-        if win_rate < self.accuracy_threshold:
-            self.logger.warning(f"[{symbol}] Performance Drop Detected! Win Rate {win_rate:.1%} < {self.accuracy_threshold:.1%}. Initiating Retraining...")
             
-            # Run in separate thread to not block trading
-            t = threading.Thread(target=self._run_retraining_script, args=(symbol,))
-            t.daemon = True
-            t.start()
+        # Trigger 1: Rapid Adaptation (2 consecutive losses)
+        rapid_adapt_triggered = self.consecutive_losses.get(symbol, 0) >= 2
+        
+        # Trigger 2: Long-term performance drop
+        performance_drop = (len(self.trade_history[symbol]) >= self.min_trades) and (win_rate < self.accuracy_threshold)
+
+        if rapid_adapt_triggered:
+            self.logger.warning(f"[{symbol}] RAPID ADAPTATION TRIGGERED: 2 consecutive losses. Broker OTC patterns may have shifted. Initiating Retraining...")
+            self.consecutive_losses[symbol] = 0 # Reset to prevent spamming
+            
+        elif performance_drop:
+            self.logger.warning(f"[{symbol}] Performance Drop Detected! Win Rate {win_rate:.1%} < {self.accuracy_threshold:.1%}. Initiating Retraining...")
+        else:
+            return
+            
+        # If we didn't return, one of the triggers hit. Run retraining.
+        # Run in separate thread to not block trading
+        t = threading.Thread(target=self._run_retraining_script, args=(symbol,))
+        t.daemon = True
+        t.start()
             
     def _run_retraining_script(self, symbol: str):
         """Execute the training script in a subprocess."""

@@ -1165,13 +1165,16 @@ class IQOptionExecutor(OrderExecutor):
 
     """
 
-    def __init__(self, email, password, account_type="PRACTICE"):
+    def __init__(self, email, password, account_type="PRACTICE", proxy=None):
 
         from iqoptionapi.stable_api import IQ_Option
 
-        
-
-        self.api = IQ_Option(email, password)
+        if proxy:
+            # iqoptionapi expects proxies in the format {"http": "http://IP:PORT", "https": "http://IP:PORT"}
+            self.api = IQ_Option(email, password, proxies=proxy)
+            logger.info("Initializing IQ Option with Proxy Configuration.")
+        else:
+            self.api = IQ_Option(email, password)
 
         status, reason = self.api.connect()
 

@@ -69,7 +69,19 @@ class TradingBot:
         elif config.get('bot', {}).get('market_type') == 'iqoption' and config.get('brokers', {}).get('iqoption', {}).get('enabled'):
             from strategies.order_executor import IQOptionExecutor
             iq_cfg = config.get('brokers', {}).get('iqoption', {})
-            self.executor = IQOptionExecutor(email=iq_cfg['email'], password=iq_cfg['password'], account_type=iq_cfg.get('account_type', 'PRACTICE'))
+            
+            # Extract proxy if it exists
+            proxy_cfg = None
+            if iq_cfg.get('proxy_host') and iq_cfg.get('proxy_port'):
+                proxy_url = f"http://{iq_cfg['proxy_user']}:{iq_cfg['proxy_pass']}@{iq_cfg['proxy_host']}:{iq_cfg['proxy_port']}" if iq_cfg.get('proxy_user') else f"http://{iq_cfg['proxy_host']}:{iq_cfg['proxy_port']}"
+                proxy_cfg = {"http": proxy_url, "https": proxy_url}
+                
+            self.executor = IQOptionExecutor(
+                email=iq_cfg['email'], 
+                password=iq_cfg['password'], 
+                account_type=iq_cfg.get('account_type', 'PRACTICE'),
+                proxy=proxy_cfg
+            )
             self.monitor.logger.info("Using IQ Option Executor")
         elif config.get('brokers', {}).get('deriv', {}).get('enabled'):
             from strategies.deriv_executor import DerivExecutorSync
@@ -282,7 +294,7 @@ class TradingBot:
         
         return None
 
-    def prepare_features(self, df: pd.DataFrame, model_type: str):
+    def prepare_features(self, df: pd.DataFrame, model_type: str, symbol: str):
         preprocessor = self.preprocessors.get(model_type)
         if not preprocessor:
             return None
@@ -301,20 +313,36 @@ class TradingBot:
                 feature_columns = [col for col in df_features.columns if df_features[col].dtype in ['float64', 'int64', 'float32', 'int32']]
                 feature_columns = [col for col in feature_columns if col not in ['Date', 'Datetime']]
                 
-                # Load the scaler saved during training
-                scaler_path = f"models/{self.symbols[0].replace(' ', '_')}_scaler.gz"
+                # Load the scaler saved during training for the SPECIFIC symbol
+                scaler_path = f"models/{symbol.replace(' ', '_')}_scaler.gz"
                 
                 if os.path.exists(scaler_path):
                     import joblib
+                    import warnings
                     scaler = joblib.load(scaler_path)
-                    data_scaled = scaler.transform(df_features[feature_columns].values)
+                    
+                    # Ensure exact feature alignment
+                    if hasattr(scaler, 'feature_names_in_'):
+                        feature_columns = list(scaler.feature_names_in_)
+                        for col in feature_columns:
+                            if col not in df_features.columns:
+                                df_features[col] = 0.0
+                    
+                    # Transform while keeping column names to avoid StandardScaler warnings
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        df_features[feature_columns] = scaler.transform(df_features[feature_columns])
+                    
+                    data_scaled = df_features[feature_columns].values
                     self.monitor.logger.debug(f"LSTM: Using saved scaler from {scaler_path}")
                 else:
                     # Fallback: Create new scaler (but log warning)
                     self.monitor.logger.warning(f"LSTM Scaler not found at {scaler_path}. Using fit_transform (predictions may be unreliable!)")
                     from sklearn.preprocessing import StandardScaler
                     scaler = StandardScaler()
-                    data_scaled = scaler.fit_transform(df_features[feature_columns].values)
+                    # Transform dataframe to avoid warnings, then get values
+                    df_features[feature_columns] = scaler.fit_transform(df_features[feature_columns])
+                    data_scaled = df_features[feature_columns].values
                 
                 return data_scaled
 
@@ -615,7 +643,7 @@ class TradingBot:
                 for model_type, model in symbol_models.items():
                     if model is None:
                         continue
-                    features = self.prepare_features(df.copy(), model_type)
+                    features = self.prepare_features(df.copy(), model_type, symbol)
                     # Pass model instance explicitly
                     pred_result = self.make_prediction(features, model, model_type)
                     
@@ -708,6 +736,16 @@ class TradingBot:
     def execute_strategy(self, symbol, prediction_input, current_price, trend_context=None, df=None):
         position_info = self.positions.get(symbol)
         action = None # Initialize action
+        
+        # Calculate RSI for hard technical filter
+        current_rsi = 50 # neutral default
+        if df is not None and not df.empty and len(df) > 14:
+            try:
+                from ta.momentum import RSIIndicator
+                rsi_series = RSIIndicator(df['Close'], window=14).rsi()
+                current_rsi = rsi_series.iloc[-1]
+            except Exception as e:
+                pass
 
         # ========== CHECK EXITS FIRST (SL, TP, TRAILING) ==========
         if position_info and self.market_type != 'iqoption':
@@ -749,6 +787,14 @@ class TradingBot:
         if action in [TradeAction.GO_LONG, TradeAction.GO_SHORT]:
             if not self.risk_manager.check_daily_loss(self.daily_pnl):
                 self.monitor.logger.warning(f"Daily loss limit reached. Skipping trade for {symbol}.")
+                return
+                
+            # HARD RSI FILTER
+            if action == TradeAction.GO_LONG and current_rsi > 80:
+                self.monitor.logger.warning(f"[{symbol}] RSI={current_rsi:.1f}. Overbought. Blocking LONG trade despite AI signal.")
+                return
+            if action == TradeAction.GO_SHORT and current_rsi < 20:
+                self.monitor.logger.warning(f"[{symbol}] RSI={current_rsi:.1f}. Oversold. Blocking SHORT trade despite AI signal.")
                 return
 
         # ========== EXECUTE TRADE ACTION ==========

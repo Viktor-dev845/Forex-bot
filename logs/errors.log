@@ -2840,3 +2840,126 @@ RuntimeError: input.size(-1) must be equal to input_size. Expected 57, got 70
 2026-08-14 17:07:37 | ERROR    | trading_bot | Order rejected for USDCAD. Possible suspension. Triggering rotation.
 2026-08-14 17:16:02 | ERROR    | trading_bot | Order rejected for NZDUSD. Possible suspension. Triggering rotation.
 2026-08-14 17:16:34 | ERROR    | trading_bot | Failed to fetch data for EURUSD-OTC.
+2026-08-19 23:56:17 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-19 23:56:51 | ERROR    | trading_bot | Reconnection failed: Expecting value: line 1 column 2 (char 1)
+2026-08-20 14:45:40 | ERROR    | trading_bot | Order rejected for NZDUSD-OTC. Possible suspension. Triggering rotation.
+2026-08-20 15:37:44 | ERROR    | trading_bot | Order rejected for EURGBP. Possible suspension. Triggering rotation.
+2026-08-20 16:13:39 | ERROR    | trading_bot | Order rejected for USDJPY. Possible suspension. Triggering rotation.
+2026-08-21 08:29:59 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:32:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:34:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:36:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:38:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:40:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:42:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:44:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:46:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:48:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:50:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:52:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:54:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:56:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 08:58:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:00:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:02:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:04:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:06:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:08:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:10:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:12:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:14:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:16:04 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:18:03 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:20:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:22:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:24:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:26:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:28:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:30:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:32:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:34:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:36:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:38:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:40:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:42:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:44:01 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:46:02 | ERROR    | trading_bot | Error preparing features for lstm: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2026-08-21 09:47:11 | ERROR    | trading_bot | Order rejected for EURAUD. Possible suspension. Triggering rotation.
