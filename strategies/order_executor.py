@@ -1165,7 +1165,7 @@ class IQOptionExecutor(OrderExecutor):
 
     """
 
-    def __init__(self, email, password, account_type="PRACTICE", proxy=None):
+    def __init__(self, email, password, account_type="PRACTICE", proxy=None, expiration_minutes=2):
 
         from iqoptionapi.stable_api import IQ_Option
 
@@ -1187,6 +1187,7 @@ class IQOptionExecutor(OrderExecutor):
         self.api.change_balance(account_type)
 
         self.paper_trading = (account_type == 'PRACTICE')
+        self.expiration_minutes = int(expiration_minutes)
 
         logger.info(f"Connected to IQ Option ({account_type} account)")
 
@@ -1204,12 +1205,19 @@ class IQOptionExecutor(OrderExecutor):
 
         action = "call" if side == OrderSide.BUY else "put"
 
-        # We default to 2 minutes expiration for binary options
-        expirations_mode = 2
-
-        
-
+        expirations_mode = self.expiration_minutes
         status, order_id = self.api.buy(quantity, symbol, action, expirations_mode)
+        
+        # IQ Option Restriction Bypass: If rejected, automatically attempt Fallback expirations
+        if not status:
+            logger.warning(f"[IQOPTION] {expirations_mode}m expiration rejected for {symbol}. Attempting fallbacks (1m, 15m)...")
+            for fallback_exp in [1, 15]:
+                if fallback_exp == expirations_mode: 
+                    continue
+                status, order_id = self.api.buy(quantity, symbol, action, fallback_exp)
+                if status:
+                    logger.info(f"[IQOPTION] Restriction bypassed! Successfully used {fallback_exp}m expiration fallback.")
+                    break
 
         
 

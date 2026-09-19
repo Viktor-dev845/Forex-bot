@@ -140,3 +140,4 @@ if __name__ == "__main__":
         train_pipeline(args.symbol)
     except Exception as e:
         print(f"Training Failed: {e}")
+        raise SystemExit(1)

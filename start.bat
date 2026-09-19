@@ -1,17 +1,21 @@
 @echo off
-title QuantAI Trading Bot & Dashboard
+title "QuantAI Trading Bot & Dashboard"
 
 echo ==================================================
-echo   Starting QuantAI Performance Dashboard...
+echo   Starting QuantAI Web API...
 echo ==================================================
-:: Run streamlit using python module to avoid PATH issues
-start /B python -m streamlit run dashboard.py
+:: Run the Flask API server in the background and hide output
+start /B python api.py > api.log 2>&1
 
 echo.
 echo ==================================================
 echo   Starting QuantAI Neural Engine...
 echo ==================================================
+:restart
 :: Run the trading bot in the foreground
-python trading_bot.py
+python -u trading_bot.py
 
-pause
+echo.
+echo [WARNING] Connection lost or bot stopped. Auto-restarting in 10 seconds...
+timeout /t 10
+goto restart

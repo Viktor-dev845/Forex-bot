@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantAI - Operation $100</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">⚡</div>
+            <span>QuantAI</span>
+        </div>
+        <nav>
+            <a href="#" class="active">Dashboard</a>
+            <a href="#">Trades</a>
+            <a href="#">Settings</a>
+        </nav>
+    </div>
+
+    <main class="content">
+        <header>
+            <h2 class="page-title">Operation $100: Weekly Challenge</h2>
+            <div class="status-indicator">
+                <span class="pulse"></span> System Online
+            </div>
+        </header>
+
+        <!-- The Goal Tracker -->
+        <section class="goal-tracker glass-card">
+            <div class="goal-header">
+                <div>
+                    <h3>Weekly Profit Target</h3>
+                    <p class="subtitle">Rolling 7-Day Window</p>
+                </div>
+                <div class="goal-amounts">
+                    <span id="current-profit" class="highlight-value">$0.00</span>
+                    <span class="divider">/</span>
+                    <span class="target-value">$100.00</span>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar-bg">
+                    <div id="progress-fill" class="progress-fill"></div>
+                    <div class="progress-glow"></div>
+                </div>
+            </div>
+            
+            <div class="goal-footer">
+                <span id="percent-complete">0% Complete</span>
+                <span id="remaining-amount" class="remaining">$100.00 needed to hit target</span>
+            </div>
+        </section>
+
+        <!-- Metrics Grid -->
+        <section class="metrics-grid">
+            <div class="metric-card glass-card">
+                <span class="metric-label">Account Balance</span>
+                <h3 id="equity-val">$0.00</h3>
+                <div class="delta positive" id="daily-pnl">+ $0.00 Today</div>
+            </div>
+            <div class="metric-card glass-card">
+                <span class="metric-label">Win Rate</span>
+                <h3 id="win-rate-val">0.0%</h3>
+                <div class="delta text-neutral">AI Accuracy</div>
+            </div>
+            <div class="metric-card glass-card">
+                <span class="metric-label">Active Trades</span>
+                <h3 id="active-pos-val">0</h3>
+                <div class="delta text-neutral">Open Positions</div>
+            </div>
+            <div class="metric-card glass-card">
+                <span class="metric-label">Strategy Mode</span>
+                <h3 class="electric-blue">ENSEMBLE</h3>
+                <div class="delta text-neutral">LSTM + XGBoost</div>
+            </div>
+        </section>
+
+        <section class="charts-section">
+            <div class="chart-container glass-card">
+                <h3>Recent Trade Activity</h3>
+                <div class="table-container">
+                    <table id="trades-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Symbol</th>
+                                <th>Action</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trades-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

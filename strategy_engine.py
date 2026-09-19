@@ -9,6 +9,27 @@ class TradeAction(Enum):
 class BaseStrategy:
     def __init__(self, config: dict):
         self.config = config
+        self.trading_hours_cfg = config.get('bot', {}).get('trading_hours', {})
+
+    def _is_within_trading_hours(self) -> bool:
+        if not self.trading_hours_cfg.get('enabled', False):
+            return True
+            
+        import datetime
+        now = datetime.datetime.now().time()
+        start_str = self.trading_hours_cfg.get('start', '00:00')
+        end_str = self.trading_hours_cfg.get('end', '23:59')
+        
+        try:
+            start_time = datetime.datetime.strptime(start_str, '%H:%M').time()
+            end_time = datetime.datetime.strptime(end_str, '%H:%M').time()
+            
+            if start_time <= end_time:
+                return start_time <= now <= end_time
+            else: # spans midnight
+                return now >= start_time or now <= end_time
+        except ValueError:
+            return True # fallback if format is bad
 
     def get_decision(self, prediction: float, position_info: dict, symbol: str = None) -> TradeAction:
         """
@@ -36,6 +57,9 @@ class AIStrategy(BaseStrategy):
             elif pos_side == 'short' and prediction > self.short_exit_threshold:
                 return TradeAction.CLOSE_POSITION
         else: # No position
+            if not self._is_within_trading_hours():
+                return TradeAction.DO_NOTHING
+
             if prediction > self.long_entry_threshold:
                 action = TradeAction.GO_LONG
             elif prediction < self.short_entry_threshold:
@@ -83,6 +107,10 @@ class EnsembleStrategy(AIStrategy):
         super().__init__(config)
         # Default equal weights. These can be updated by the bot based on model performance.
         self.model_weights = {'xgboost': 0.5, 'lstm': 0.5}
+        ensemble_config = config.get('model', {}).get('ensemble', {})
+        self.min_model_confidence = ensemble_config.get('min_model_confidence', 0.52)
+        self.require_model_agreement = ensemble_config.get('require_model_agreement', True)
+        self.counter_trend_confidence = ensemble_config.get('counter_trend_confidence', 0.60)
         self.logger = logging.getLogger(__name__) # Add logger
         
     def set_weights(self, weights: dict):
@@ -139,30 +167,68 @@ class EnsembleStrategy(AIStrategy):
         
         # If no position, check for entry using WEIGHTED AVERAGE (not all-agree)
         else:
+            if not self._is_within_trading_hours():
+                return TradeAction.DO_NOTHING
+                
+            long_threshold = self.long_entry_threshold
+            short_threshold = self.short_entry_threshold
+            if trend_context == 'DOWN':
+                long_threshold = self.counter_trend_confidence
+            elif trend_context == 'UP':
+                short_threshold = 1 - self.counter_trend_confidence
+
             action = TradeAction.DO_NOTHING
-            if weighted_pred > self.long_entry_threshold:
+            if weighted_pred > long_threshold:
                 action = TradeAction.GO_LONG
-            elif weighted_pred < self.short_entry_threshold:
+            elif weighted_pred < short_threshold:
                 action = TradeAction.GO_SHORT
+            else:
+                self.logger.info(
+                    f"Signal skipped for {symbol}: weighted prediction {weighted_pred:.2%} "
+                    f"is inside the active range ({short_threshold:.2%}-{long_threshold:.2%})"
+                )
+                return TradeAction.DO_NOTHING
+
+            valid_predictions = [prediction for prediction in predictions.values() if prediction is not None and prediction != 0.5]
+            if len(valid_predictions) < 2:
+                self.logger.info(f"Signal skipped for {symbol}: ensemble requires both model predictions")
+                return TradeAction.DO_NOTHING
+
+            if self.require_model_agreement:
+                if action == TradeAction.GO_LONG and not all(prediction >= self.min_model_confidence for prediction in valid_predictions):
+                    self.logger.info(
+                        f"Signal skipped for {symbol}: models do not agree on a qualified LONG "
+                        f"(minimum per-model confidence {self.min_model_confidence:.2%})"
+                    )
+                    return TradeAction.DO_NOTHING
+                if action == TradeAction.GO_SHORT and not all(prediction <= 1 - self.min_model_confidence for prediction in valid_predictions):
+                    self.logger.info(
+                        f"Signal skipped for {symbol}: models do not agree on a qualified SHORT "
+                        f"(maximum per-model probability {1 - self.min_model_confidence:.2%})"
+                    )
+                    return TradeAction.DO_NOTHING
                 
             # --- Multi-Timeframe Filter (Phase 2) ---
             if trend_context and action != TradeAction.DO_NOTHING:
-                # Rule: Do not trade against the Higher Timeframe Trend
-                if trend_context == 'UP' and action == TradeAction.GO_SHORT:
-                    self.logger.info(f"Signal BLOCKED by 1H Trend (Context: UP, Action: SHORT)")
-                    return TradeAction.DO_NOTHING
-                    
-                if trend_context == 'DOWN' and action == TradeAction.GO_LONG:
-                    self.logger.info(f"Signal BLOCKED by 1H Trend (Context: DOWN, Action: LONG)")
-                    return TradeAction.DO_NOTHING
+                if trend_context == 'UP' and action == TradeAction.GO_LONG:
+                    self.logger.info(f"Trend-aligned LONG accepted for {symbol}")
+                elif trend_context == 'DOWN' and action == TradeAction.GO_SHORT:
+                    self.logger.info(f"Trend-aligned SHORT accepted for {symbol}")
+                else:
+                    self.logger.info(
+                        f"Counter-trend {action.name} accepted for {symbol} at "
+                        f"{weighted_pred:.2%} confidence"
+                    )
 
             # Apply Safety Filter
             if symbol and action != TradeAction.DO_NOTHING:
                 sym_upper = symbol.upper()
                 if "BOOM" in sym_upper and action == TradeAction.GO_LONG:
                     # Log internally if possible, but here we just block
+                    self.logger.info(f"Signal skipped for {symbol}: LONG blocked by BOOM safety filter")
                     return TradeAction.DO_NOTHING # Block Buy on Boom
                 if "CRASH" in sym_upper and action == TradeAction.GO_SHORT:
+                    self.logger.info(f"Signal skipped for {symbol}: SHORT blocked by CRASH safety filter")
                     return TradeAction.DO_NOTHING # Block Sell on Crash
             
             return action
@@ -216,6 +282,9 @@ class AnyStrongSignalStrategy(EnsembleStrategy):
         
         # Entry Logic: ANY strong signal triggers trade
         else:
+            if not self._is_within_trading_hours():
+                return TradeAction.DO_NOTHING
+                
             max_prediction = max(valid_predictions.values())
             min_prediction = min(valid_predictions.values())
             
@@ -231,15 +300,7 @@ class AnyStrongSignalStrategy(EnsembleStrategy):
                 action = TradeAction.GO_SHORT
                 self.logger.info(f"Strong SELL signal: {min_prediction:.2%} (threshold: {self.sell_threshold:.2%})")
             
-            # Apply Multi-Timeframe Filter (Phase 2)
-            if trend_context and action != TradeAction.DO_NOTHING:
-                if trend_context == 'UP' and action == TradeAction.GO_SHORT:
-                    self.logger.info(f"Signal BLOCKED by 1H Trend (Context: UP, Action: SHORT)")
-                    return TradeAction.DO_NOTHING
-                    
-                if trend_context == 'DOWN' and action == TradeAction.GO_LONG:
-                    self.logger.info(f"Signal BLOCKED by 1H Trend (Context: DOWN, Action: LONG)")
-                    return TradeAction.DO_NOTHING
+            # 1H Trend Filter removed by user request for testing phase
 
             # Apply Symbol Safety Filter
             if symbol and action != TradeAction.DO_NOTHING:

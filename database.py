@@ -70,6 +70,24 @@ class Database:
         except Exception as e:
             print(f"DB Error: {e}")
 
+    def update_trade_result(self, order_id: str, pnl: float):
+        """Update an existing pending trade with the final result."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+            UPDATE trades 
+            SET pnl = ? 
+            WHERE order_id = ?
+            ''', (pnl, order_id))
+            
+            conn.commit()
+            conn.close()
+            print(f"Trade result updated for order {order_id}: {pnl}")
+        except Exception as e:
+            print(f"DB Update Error: {e}")
+
     def get_trades(self, limit=100):
         """Retrieve recent trades."""
         conn = sqlite3.connect(self.db_path)
@@ -106,6 +124,24 @@ class Database:
             "total_pnl": total_pnl,
             "win_rate": win_rate
         }
+
+    def get_weekly_pnl(self):
+        """Calculate total PnL from trades closed in the last 7 days."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # We calculate rolling 7 days. SQLite datetime function handles isoformat strings nicely.
+        cursor.execute('''
+            SELECT SUM(pnl) 
+            FROM trades 
+            WHERE side="CLOSE" 
+            AND datetime(timestamp) >= datetime('now', '-7 days')
+        ''')
+        result = cursor.fetchone()
+        weekly_pnl = result[0] if result and result[0] is not None else 0.0
+        
+        conn.close()
+        return weekly_pnl
 
 if __name__ == "__main__":
     db = Database()

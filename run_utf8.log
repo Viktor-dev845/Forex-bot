@@ -1,0 +1,115 @@
+python : 2026-08-27 14:48:08 | INFO     | trading_bot | Bot monitoring system initialized (SQLite Enabled)
+At line:1 char:1
++ python trading_bot.py > run.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (2026-08-27 14:4...SQLite Enabled):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+INFO:trading_bot:Bot monitoring system initialized (SQLite Enabled)
+2026-08-27 14:48:08 | INFO     | trading_bot | Initializing Trading Bot...
+INFO:trading_bot:Initializing Trading Bot...
+INFO:strategies.order_executor:Connected to IQ Option (PRACTICE account)
+2026-08-27 14:48:11 | INFO     | trading_bot | Using IQ Option Executor
+INFO:trading_bot:Using IQ Option Executor
+2026-08-27 14:48:11 | INFO     | trading_bot | Loading models for EURUSD-OTC...
+INFO:trading_bot:Loading models for EURUSD-OTC...
+2026-08-27 14:48:11 | WARNING  | trading_bot | [EURUSD-OTC] LSTM model not found at models/EURUSD-OTC_lstm.pth. 
+Triggering initial training.
+WARNING:trading_bot:[EURUSD-OTC] LSTM model not found at models/EURUSD-OTC_lstm.pth. Triggering initial training.
+2026-08-27 14:48:11 | INFO     | trading_bot | [EURUSD-OTC] Starting SEQUENTIAL initial training...
+INFO:trading_bot:[EURUSD-OTC] Starting SEQUENTIAL initial training...
+2026-08-27 14:48:11 | INFO     | trading_bot | [EURUSD-OTC] Fetching data (running in background)...
+2026-08-27 14:48:11 | WARNING  | trading_bot | [EURUSD-OTC] XGBoost model not found at models/EURUSD-OTC_xgboost.json. 
+Triggering initial training.
+INFO:trading_bot:[EURUSD-OTC] Fetching data (running in background)...
+WARNING:trading_bot:[EURUSD-OTC] XGBoost model not found at models/EURUSD-OTC_xgboost.json. Triggering initial 
+training.
+2026-08-27 14:48:11 | INFO     | trading_bot | Loading models for GBPUSD-OTC...
+INFO:trading_bot:Loading models for GBPUSD-OTC...
+2026-08-27 14:48:11 | WARNING  | trading_bot | [GBPUSD-OTC] LSTM model not found at models/GBPUSD-OTC_lstm.pth. 
+Triggering initial training.
+WARNING:trading_bot:[GBPUSD-OTC] LSTM model not found at models/GBPUSD-OTC_lstm.pth. Triggering initial training.
+2026-08-27 14:48:11 | WARNING  | trading_bot | [GBPUSD-OTC] XGBoost model not found at models/GBPUSD-OTC_xgboost.json. 
+Triggering initial training.
+WARNING:trading_bot:[GBPUSD-OTC] XGBoost model not found at models/GBPUSD-OTC_xgboost.json. Triggering initial 
+training.
+2026-08-27 14:48:11 | INFO     | trading_bot | Loading models for NZDUSD-OTC...
+INFO:trading_bot:Loading models for NZDUSD-OTC...
+2026-08-27 14:48:11 | WARNING  | trading_bot | [NZDUSD-OTC] LSTM model not found at models/NZDUSD-OTC_lstm.pth. 
+Triggering initial training.
+WARNING:trading_bot:[NZDUSD-OTC] LSTM model not found at models/NZDUSD-OTC_lstm.pth. Triggering initial training.
+2026-08-27 14:48:11 | WARNING  | trading_bot | [NZDUSD-OTC] XGBoost model not found at models/NZDUSD-OTC_xgboost.json. 
+Triggering initial training.
+WARNING:trading_bot:[NZDUSD-OTC] XGBoost model not found at models/NZDUSD-OTC_xgboost.json. Triggering initial 
+training.
+2026-08-27 14:48:11 | INFO     | trading_bot | Loading models for AUDCAD-OTC...
+INFO:trading_bot:Loading models for AUDCAD-OTC...
+2026-08-27 14:48:11 | WARNING  | trading_bot | [AUDCAD-OTC] LSTM model not found at models/AUDCAD-OTC_lstm.pth. 
+Triggering initial training.
+WARNING:trading_bot:[AUDCAD-OTC] LSTM model not found at models/AUDCAD-OTC_lstm.pth. Triggering initial training.
+2026-08-27 14:48:11 | WARNING  | trading_bot | [AUDCAD-OTC] XGBoost model not found at models/AUDCAD-OTC_xgboost.json. 
+Triggering initial training.
+WARNING:trading_bot:[AUDCAD-OTC] XGBoost model not found at models/AUDCAD-OTC_xgboost.json. Triggering initial 
+training.
+2026-08-27 14:48:11 | INFO     | trading_bot | Loading models for USDCHF-OTC...
+INFO:trading_bot:Loading models for USDCHF-OTC...
+2026-08-27 14:48:11 | WARNING  | trading_bot | [USDCHF-OTC] LSTM model not found at models/USDCHF-OTC_lstm.pth. 
+Triggering initial training.
+WARNING:trading_bot:[USDCHF-OTC] LSTM model not found at models/USDCHF-OTC_lstm.pth. Triggering initial training.
+2026-08-27 14:48:11 | WARNING  | trading_bot | [USDCHF-OTC] XGBoost model not found at models/USDCHF-OTC_xgboost.json. 
+Triggering initial training.
+WARNING:trading_bot:[USDCHF-OTC] XGBoost model not found at models/USDCHF-OTC_xgboost.json. Triggering initial 
+training.
+2026-08-27 14:48:11 | INFO     | trading_bot | Loading models for EURGBP-OTC...
+INFO:trading_bot:Loading models for EURGBP-OTC...
+2026-08-27 14:48:11 | WARNING  | trading_bot | [EURGBP-OTC] LSTM model not found at models/EURGBP-OTC_lstm.pth. 
+Triggering initial training.
+WARNING:trading_bot:[EURGBP-OTC] LSTM model not found at models/EURGBP-OTC_lstm.pth. Triggering initial training.
+2026-08-27 14:48:11 | WARNING  | trading_bot | [EURGBP-OTC] XGBoost model not found at models/EURGBP-OTC_xgboost.json. 
+Triggering initial training.
+WARNING:trading_bot:[EURGBP-OTC] XGBoost model not found at models/EURGBP-OTC_xgboost.json. Triggering initial 
+training.
+INFO:strategy_engine:AnyStrongSignal Strategy: BUY>0.54, SELL<0.46
+2026-08-27 14:48:11 | INFO     | trading_bot | Using Any Strong Signal Strategy (maximum flexibility)
+INFO:trading_bot:Using Any Strong Signal Strategy (maximum flexibility)
+INFO:websocket_client:IQ Option connected. Starting real-time streams...
+2026-08-27 14:48:19 | INFO     | trading_bot | [SUCCESS] IQ Option WebSocket streaming enabled
+INFO:trading_bot:[SUCCESS] IQ Option WebSocket streaming enabled
+2026-08-27 14:48:19 | INFO     | trading_bot | Bot initialized for ['EURUSD-OTC', 'GBPUSD-OTC', 'NZDUSD-OTC', 
+'AUDCAD-OTC', 'USDCHF-OTC', 'EURGBP-OTC'] (Paper trading)
+INFO:trading_bot:Bot initialized for ['EURUSD-OTC', 'GBPUSD-OTC', 'NZDUSD-OTC', 'AUDCAD-OTC', 'USDCHF-OTC', 
+'EURGBP-OTC'] (Paper trading)
+2026-08-27 14:48:20 | INFO     | trading_bot | [BALANCE] Current Account Balance: $63.00
+INFO:trading_bot:[BALANCE] Current Account Balance: $63.00
+2026-08-27 14:48:20 | INFO     | trading_bot | Restored daily PnL of 0.00 from today.
+INFO:trading_bot:Restored daily PnL of 0.00 from today.
+2026-08-27 14:48:20 | INFO     | trading_bot | Reconciling state with broker...
+INFO:trading_bot:Reconciling state with broker...
+2026-08-27 14:48:20 | INFO     | trading_bot | No open positions found at broker.
+INFO:trading_bot:No open positions found at broker.
+2026-08-27 14:48:20 | INFO     | trading_bot | Bot started in Smart Loop Mode. Ticking every 1s...
+INFO:trading_bot:Bot started in Smart Loop Mode. Ticking every 1s...
+2026-08-27 14:48:20 | INFO     | trading_bot | Triggering Analysis Cycle at 14:48:20
+INFO:trading_bot:Triggering Analysis Cycle at 14:48:20
+2026-08-27 14:48:20 | INFO     | trading_bot | Trading Cycle - 2026-08-27 14:48:20
+INFO:trading_bot:Trading Cycle - 2026-08-27 14:48:20
+2026-08-27 14:48:20 | INFO     | trading_bot | [BALANCE] Current Account Balance: $63.00 (Daily PnL: +0.00)
+INFO:trading_bot:[BALANCE] Current Account Balance: $63.00 (Daily PnL: +0.00)
+2026-08-27 14:48:30 | INFO     | trading_bot | [EURUSD-OTC] Currently retraining in background. Skipping trading cycle 
+to avoid bad trades.
+INFO:trading_bot:[EURUSD-OTC] Currently retraining in background. Skipping trading cycle to avoid bad trades.
+2026-08-27 14:48:30 | INFO     | trading_bot | [GBPUSD-OTC] Currently retraining in background. Skipping trading cycle 
+to avoid bad trades.
+INFO:trading_bot:[GBPUSD-OTC] Currently retraining in background. Skipping trading cycle to avoid bad trades.
+2026-08-27 14:48:30 | INFO     | trading_bot | [NZDUSD-OTC] Currently retraining in background. Skipping trading cycle 
+to avoid bad trades.
+INFO:trading_bot:[NZDUSD-OTC] Currently retraining in background. Skipping trading cycle to avoid bad trades.
+2026-08-27 14:48:30 | INFO     | trading_bot | [AUDCAD-OTC] Currently retraining in background. Skipping trading cycle 
+to avoid bad trades.
+INFO:trading_bot:[AUDCAD-OTC] Currently retraining in background. Skipping trading cycle to avoid bad trades.
+2026-08-27 14:48:30 | INFO     | trading_bot | [USDCHF-OTC] Currently retraining in background. Skipping trading cycle 
+to avoid bad trades.
+INFO:trading_bot:[USDCHF-OTC] Currently retraining in background. Skipping trading cycle to avoid bad trades.
+2026-08-27 14:48:30 | INFO     | trading_bot | [EURGBP-OTC] Currently retraining in background. Skipping trading cycle 
+to avoid bad trades.
+INFO:trading_bot:[EURGBP-OTC] Currently retraining in background. Skipping trading cycle to avoid bad trades.

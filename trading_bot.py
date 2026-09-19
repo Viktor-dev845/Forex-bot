@@ -53,6 +53,8 @@ class TradingBot:
         # Components
         from strategies.risk_manager import RiskParameters
         risk_config = config.get('risk', {})
+        self.daily_profit_target = float(risk_config.get('daily_profit_target', 0.0))
+        self.daily_loss_limit = float(risk_config.get('daily_loss_limit', 0.0))
         risk_params = RiskParameters(
             max_daily_loss_pct=risk_config.get('max_daily_loss_pct', 0.02),
             stop_loss_pct=risk_config.get('stop_loss_pct', 0.02),
@@ -80,7 +82,8 @@ class TradingBot:
                 email=iq_cfg['email'], 
                 password=iq_cfg['password'], 
                 account_type=iq_cfg.get('account_type', 'PRACTICE'),
-                proxy=proxy_cfg
+                proxy=proxy_cfg,
+                expiration_minutes=config.get('bot', {}).get('expiration_time_minutes', 2)
             )
             self.monitor.logger.info("Using IQ Option Executor")
         elif config.get('brokers', {}).get('deriv', {}).get('enabled'):
@@ -102,6 +105,13 @@ class TradingBot:
             'lstm': FeatureEngine(),
             'xgboost': FeatureEngine()
         }
+        
+        # Initialize Retrainer (must be done before loading models to handle initial training triggers)
+        self.retrainer = RetrainingManager(accuracy_threshold=0.55, min_trades=20)
+        
+        # Initial training queue to avoid freezing system with parallel processes
+        self.initial_training_queue = []
+        self.initial_training_thread_running = False
         
         # Load models for EACH symbol
         self.models = {}
@@ -141,9 +151,7 @@ class TradingBot:
         self.martingale_multiplier = 1
         self.pending_binary_orders = {}
         
-        # Initialize Retrainer
-        self.retrainer = RetrainingManager(accuracy_threshold=0.55, min_trades=20)
-        
+
         # WebSocket Client for Real-Time Price Streaming
         self.websocket_client = None
         ws_config = config.get('websocket', {})
@@ -265,35 +273,91 @@ class TradingBot:
             if os.path.exists(actual_path):
                 model.load_model()
                 self.monitor.logger.info(f"[{symbol}] XGBoost Model loaded from {actual_path}")
+                return model
             else:
-                self.monitor.logger.warning(f"[{symbol}] XGBoost model not found at {actual_path}. Using untrained model/fallback.")
-            return model
+                self.monitor.logger.warning(f"[{symbol}] XGBoost model not found at {actual_path}. Triggering initial training.")
+                self._trigger_initial_training(symbol)
+                return None
 
         elif model_type == 'lstm':
             lstm_params = model_config.get('lstm', {})
             # Dynamic path: models/{symbol}_lstm.pth
             model_path = f"models/{symbol}_lstm.pth"
             
-            # Input size is 70 (from FeatureEngine with new indicators)
-            model = TradingLSTM(input_size=70, hidden_size=lstm_params.get('hidden_size', 32), num_layers=lstm_params.get('num_layers', 2))
             if os.path.exists(model_path):
                 import torch
                 try:
-                    checkpoint = torch.load(model_path)
+                    checkpoint = torch.load(model_path, map_location='cpu')
+                    state_dict = checkpoint.get('model_state_dict', checkpoint)
+                    input_size = state_dict['lstm.weight_ih_l0'].shape[1]
+                    hidden_size = state_dict['lstm.weight_ih_l0'].shape[0] // 4
+                    model = TradingLSTM(input_size=input_size, hidden_size=hidden_size, num_layers=lstm_params.get('num_layers', 2))
                     if 'model_state_dict' in checkpoint:
-                        model.load_state_dict(checkpoint['model_state_dict'])
+                        model.load_state_dict(state_dict)
                     else:
-                        model.load_state_dict(checkpoint)
+                        model.load_state_dict(state_dict)
                     model.eval()
                     self.monitor.logger.info(f"[{symbol}] LSTM Model loaded from {model_path}")
+                    return model
                 except Exception as e:
-                    self.monitor.logger.error(f"[{symbol}] Failed to load LSTM weights. Using untrained. Error: {e}")
+                    self.monitor.logger.error(f"[{symbol}] Failed to load LSTM weights: {e}")
+                    self._trigger_initial_training(symbol)
+                    return None
             else:
-                self.monitor.logger.warning(f"[{symbol}] LSTM model not found at {model_path}. Using untrained model.")
-            return model
-        
-        return None
+                self.monitor.logger.warning(f"[{symbol}] LSTM model not found at {model_path}. Triggering initial training.")
+                self._trigger_initial_training(symbol)
+                return None
 
+    def _trigger_initial_training(self, symbol: str):
+        """Adds a symbol to the initial training queue and starts the worker thread if not running."""
+        if self.retrainer.is_training.get(symbol, False) or symbol in self.initial_training_queue:
+            return # Already training or queued
+            
+        self.retrainer.is_training[symbol] = True
+        self.initial_training_queue.append(symbol)
+        
+        if not self.initial_training_thread_running:
+            self.initial_training_thread_running = True
+            import threading
+            t = threading.Thread(target=self._process_initial_training_queue)
+            t.daemon = True
+            t.start()
+            
+    def _process_initial_training_queue(self):
+        """Processes the training queue sequentially to avoid freezing the system."""
+        import subprocess, sys
+        while self.initial_training_queue:
+            symbol = self.initial_training_queue.pop(0)
+            self.monitor.logger.info(f"[{symbol}] Starting SEQUENTIAL initial training...")
+            try:
+                self.monitor.logger.info(f"[{symbol}] Fetching data (running in background)...")
+                fetch_result = subprocess.run([sys.executable, "fetch_massive_data.py", "--symbol", symbol], capture_output=True, text=True)
+                if fetch_result.returncode != 0:
+                    raise RuntimeError(f"Data fetch failed: {fetch_result.stderr[-500:]}")
+                
+                self.monitor.logger.info(f"[{symbol}] Training XGBoost (running in background)...")
+                xgb_result = subprocess.run([sys.executable, "train_model.py", "--symbol", symbol], capture_output=True, text=True)
+                if xgb_result.returncode != 0:
+                    raise RuntimeError(f"XGBoost training failed: {xgb_result.stderr[-500:]}")
+                
+                self.monitor.logger.info(f"[{symbol}] Training LSTM (running in background)...")
+                lstm_result = subprocess.run([sys.executable, "train.py", "--ticker", symbol, "--epochs", "10"], capture_output=True, text=True)
+                if lstm_result.returncode != 0:
+                    raise RuntimeError(f"LSTM training failed: {lstm_result.stderr[-500:]}")
+
+                expected_files = [f"models/{symbol}_xgboost.json", f"models/{symbol}_lstm.pth"]
+                missing_files = [path for path in expected_files if not os.path.exists(path)]
+                if missing_files:
+                    raise RuntimeError(f"Training completed without expected model files: {missing_files}")
+                
+                self.monitor.logger.info(f"[{symbol}] Initial training complete! Queued for reload.")
+                self.retrainer.reload_needed.add(symbol)
+            except Exception as e:
+                self.monitor.logger.error(f"[{symbol}] Initial training failed: {e}")
+            finally:
+                self.retrainer.is_training[symbol] = False
+                
+        self.initial_training_thread_running = False
     def prepare_features(self, df: pd.DataFrame, model_type: str, symbol: str):
         preprocessor = self.preprocessors.get(model_type)
         if not preprocessor:
@@ -401,14 +465,22 @@ class TradingBot:
             if os.path.exists(file_path):
                 # Load existing
                 existing_df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+                existing_df.index = pd.to_datetime(existing_df.index, utc=True, errors='coerce')
+                normalized_new_df = new_df.copy()
+                normalized_new_df.index = pd.to_datetime(normalized_new_df.index, utc=True, errors='coerce')
+                existing_df = existing_df[~existing_df.index.isna()]
+                normalized_new_df = normalized_new_df[~normalized_new_df.index.isna()]
                 # Combine
-                combined_df = pd.concat([existing_df, new_df])
+                combined_df = pd.concat([existing_df, normalized_new_df])
                 # Drop duplicates based on index
                 combined_df = combined_df[~combined_df.index.duplicated(keep='last')]
                 combined_df.sort_index(inplace=True)
                 combined_df.to_csv(file_path)
             else:
-                new_df.to_csv(file_path)
+                normalized_new_df = new_df.copy()
+                normalized_new_df.index = pd.to_datetime(normalized_new_df.index, utc=True, errors='coerce')
+                normalized_new_df = normalized_new_df[~normalized_new_df.index.isna()]
+                normalized_new_df.to_csv(file_path)
         except Exception as e:
             self.monitor.logger.error(f"Error updating CSV for {symbol}: {e}")
 
@@ -449,8 +521,7 @@ class TradingBot:
         # 1. Manually poll for open pairs to bypass iqoptionapi get_all_open_time thread crash
         try:
             backup_pairs = [
-                'EURGBP', 'USDJPY', 'EURAUD', 'AUDUSD', 'USDCAD', 'NZDUSD',
-                'EURUSD-OTC', 'GBPUSD-OTC', 'NZDUSD-OTC', 'AUDCAD-OTC', 'USDCHF-OTC'
+                'EURGBP', 'USDJPY', 'EURAUD', 'EURUSD-OTC', 'GBPUSD-OTC', 'BTCUSD'
             ]
             
             new_symbol = None
@@ -458,7 +529,7 @@ class TradingBot:
                 if pair in self.rejected_pairs:
                     continue
                 self.monitor.logger.info(f"Testing backup pair: {pair}...")
-                df = self._fetch_iqoption_data_live(pair, "2m", 5)
+                df = self._fetch_iqoption_data_live(pair, "5m", 5)
                 if df is not None and not df.empty:
                     new_symbol = pair
                     break
@@ -490,7 +561,15 @@ class TradingBot:
                 return False
                 
             # 4. Update configuration
-            self.config['markets'][self.market_type]['symbols'] = [new_symbol]
+            # Ensure we don't wipe out the entire list of symbols when rotating
+            if self.market_type in self.config['markets']:
+                current_symbols = self.config['markets'][self.market_type].get('symbols', [])
+                if old_symbol in current_symbols:
+                    current_symbols.remove(old_symbol)
+                if new_symbol not in current_symbols:
+                    current_symbols.append(new_symbol)
+                self.config['markets'][self.market_type]['symbols'] = current_symbols
+            
             with open('config.json', 'w') as f:
                 json.dump(self.config, f, indent=4)
                 
@@ -510,6 +589,16 @@ class TradingBot:
             }
             
             self.monitor.logger.info(f"SUCCESS: Auto-Pair Rotation complete. Now trading {new_symbol}!")
+            
+            # CRITICAL FIX: Training took a long time, the IQ Option websocket is likely dead (WinError 10054).
+            # Force a complete reconnection before returning to the trading cycle.
+            if self.market_type == 'iqoption' and hasattr(self.executor, 'api'):
+                self.monitor.logger.info("Forcing full API reconnection after long training period...")
+                try:
+                    self.executor.api.connect()
+                except Exception as e:
+                    self.monitor.logger.error(f"Failed to reconnect API: {e}")
+                    
             return True
             
         except Exception as e:
@@ -526,6 +615,13 @@ class TradingBot:
             self.daily_pnl = 0.0
             self.last_trade_day = current_day
             self.trading_halted = False
+
+        if self.trading_halted:
+            self.monitor.logger.info(
+                f"Daily trading halt is active. PnL: ${self.daily_pnl:+.2f}. "
+                "Waiting for the next trading day."
+            )
+            return
 
         # Hot Reload Models if Retraining occurred
         if hasattr(self, 'retrainer'):
@@ -552,6 +648,26 @@ class TradingBot:
             account_info = self.executor.get_account()
             if 'cash' in account_info and account_info['cash'] is not None:
                 self.monitor.logger.info(f"[BALANCE] Current Account Balance: ${account_info['cash']:.2f} (Daily PnL: {self.daily_pnl:+.2f})")
+                
+                # Check Daily Profit Target
+                daily_target = self.config.get('risk', {}).get('daily_profit_target', 20.0)
+                # Ensure we only prompt once per session if they say yes
+                if not hasattr(self, 'target_acknowledged') and self.daily_pnl >= daily_target:
+                    self.monitor.logger.info(f"🎯 DAILY PROFIT TARGET REACHED! (${self.daily_pnl:.2f} >= ${daily_target:.2f})")
+                    print("\n" + "="*60)
+                    print(f"🎯 TARGET REACHED! You hit your daily profit goal of ${daily_target:.2f}!")
+                    print(f"💰 Current Daily Profit: ${self.daily_pnl:.2f}")
+                    print("="*60)
+                    user_choice = input("Do you want to continue trading? (yes/no): ").strip().lower()
+                    if user_choice not in ['y', 'yes']:
+                        self.monitor.logger.info("User chose to stop trading after hitting target. Exiting.")
+                        print("Stopping bot. Great trading today!")
+                        import sys
+                        sys.exit(0)
+                    else:
+                        self.target_acknowledged = True
+                        self.monitor.logger.info("User chose to continue trading beyond the target!")
+                        print("Continuing trading... Good luck!")
         except Exception as e:
             pass
 
@@ -582,13 +698,22 @@ class TradingBot:
             data_map = {}
             for symbol in self.symbols:
                 if self.market_type == 'iqoption':
-                    df = self._fetch_iqoption_data_live(symbol, "2m", 500)
+                    df = self._fetch_iqoption_data_live(symbol, "5m", 500)
                 else:
-                    df = asyncio.run(fetch_iqoption_data(symbol, time_interval="2m", max_candles=500)) # Fallback if needed
+                    df = asyncio.run(fetch_iqoption_data(symbol, time_interval="5m", max_candles=500)) # Fallback if needed
                     
                 if df is not None:
                     self.save_market_data(symbol, df)
                     data_map[symbol] = df
+                    
+                    # Phase 2: Fetch 15m Data for Macro Trend Filter
+                    if self.market_type == 'iqoption':
+                        try:
+                            df_h1 = self._fetch_iqoption_data_live(symbol, "15m", 50)
+                            if df_h1 is not None and not df_h1.empty:
+                                h1_data_map[symbol] = df_h1
+                        except Exception as e:
+                            self.monitor.logger.error(f"Failed to fetch 15m macro data for {symbol}: {e}")
                 else:
                     self.monitor.logger.warning(f"Failed to fetch data for {symbol}. Triggering rotation.")
                     if self.market_type == 'iqoption':
@@ -620,6 +745,10 @@ class TradingBot:
                 self.monitor.logger.warning(f"Insufficient data for {symbol}, skipping.")
                 continue
                 
+            if self.retrainer.is_training.get(symbol, False):
+                self.monitor.logger.info(f"[{symbol}] Currently retraining in background. Skipping trading cycle to avoid bad trades.")
+                continue
+                
             current_price = df['Close'].iloc[-1]
             
             if isinstance(self.executor, PaperTradingExecutor):
@@ -628,7 +757,7 @@ class TradingBot:
             strategy_name = self.config.get('model', {}).get('strategy', 'ai')
             
             prediction_input = None
-            if strategy_name == 'ensemble':
+            if strategy_name in ['ensemble', 'any_strong_signal']:
                 predictions = {}
                 
                 # Ensure models are loaded for this symbol
@@ -639,6 +768,11 @@ class TradingBot:
                     }
                 
                 symbol_models = self.models.get(symbol, {})
+                if symbol_models.get('lstm') is None or symbol_models.get('xgboost') is None:
+                    self.monitor.logger.warning(
+                        f"[{symbol}] Trading skipped: both LSTM and XGBoost models must be ready."
+                    )
+                    continue
                 
                 for model_type, model in symbol_models.items():
                     if model is None:
@@ -671,7 +805,7 @@ class TradingBot:
                 
                 # Fetch model for symbol
                 model = self.models.get(symbol, {}).get(model_type)
-                features = self.prepare_features(df.copy(), model_type)
+                features = self.prepare_features(df.copy(), model_type, symbol)
                 prediction = self.make_prediction(features, model, model_type)
                 
                 if prediction is None:
@@ -702,27 +836,16 @@ class TradingBot:
                         "signal": signal,
                         "timestamp": datetime.now().isoformat()
                     }
-                if self.market_type == 'synthetics' or mt5_enabled:
-                    # Calculate 1H Trend Context
-                    trend_context = None
-                    if symbol in h1_data_map:
-                        h1_df = h1_data_map[symbol]
-                        if not h1_df.empty and len(h1_df) > 49:
-                             # Simple Trend: Price > SMA 50 ?
-                             sma_50 = h1_df['Close'].rolling(window=50).mean().iloc[-1]
-                             h1_price = h1_df['Close'].iloc[-1]
-                             trend_context = 'UP' if h1_price > sma_50 else 'DOWN'
-                             # self.monitor.logger.info(f"[{symbol}] H1 Trend: {trend_context}")
-
-                    self.execute_strategy(symbol, prediction_input, current_price, trend_context=trend_context, df=df)
-                else:
-                    # Calculate M2 Trend Context dynamically
-                    trend_context = None
-                    if df is not None and not df.empty and len(df) > 49:
-                        sma_50 = df['Close'].rolling(window=50).mean().iloc[-1]
-                        current_c = df['Close'].iloc[-1]
-                        trend_context = 'UP' if current_c > sma_50 else 'DOWN'
-                        self.monitor.logger.info(f"[{symbol}] Micro-Trend Context: {trend_context}")
+                # Calculate Macro Trend Context (1H for Synthetics, 15m for IQOption)
+                trend_context = None
+                if symbol in h1_data_map:
+                    h1_df = h1_data_map[symbol]
+                    if not h1_df.empty and len(h1_df) > 49:
+                         # Simple Trend: Price > SMA 50 ?
+                         sma_50 = h1_df['Close'].rolling(window=50).mean().iloc[-1]
+                         h1_price = h1_df['Close'].iloc[-1]
+                         trend_context = 'UP' if h1_price > sma_50 else 'DOWN'
+                         self.monitor.logger.info(f"[{symbol}] Macro Trend Context: {trend_context}")
                     
                     self.execute_strategy(symbol, prediction_input, current_price, trend_context=trend_context, df=df)
 
@@ -734,6 +857,9 @@ class TradingBot:
         # ... (logging logic remains the same)
 
     def execute_strategy(self, symbol, prediction_input, current_price, trend_context=None, df=None):
+        if self.trading_halted:
+            return
+
         position_info = self.positions.get(symbol)
         action = None # Initialize action
         
@@ -746,6 +872,13 @@ class TradingBot:
                 current_rsi = rsi_series.iloc[-1]
             except Exception as e:
                 pass
+                
+        # Determine raw confidence from prediction_input
+        raw_confidence = 0.5
+        if isinstance(prediction_input, dict) and prediction_input:
+            raw_confidence = sum(prediction_input.values()) / len(prediction_input)
+        elif isinstance(prediction_input, (float, int)):
+            raw_confidence = float(prediction_input)
 
         # ========== CHECK EXITS FIRST (SL, TP, TRAILING) ==========
         if position_info and self.market_type != 'iqoption':
@@ -785,9 +918,22 @@ class TradingBot:
 
         # Prevent new trades if daily loss limit is hit
         if action in [TradeAction.GO_LONG, TradeAction.GO_SHORT]:
-            if not self.risk_manager.check_daily_loss(self.daily_pnl):
-                self.monitor.logger.warning(f"Daily loss limit reached. Skipping trade for {symbol}.")
+            if self.daily_loss_limit > 0 and self.daily_pnl <= -self.daily_loss_limit:
+                self.trading_halted = True
+                self.monitor.logger.warning(
+                    f"DAILY LOSS LIMIT HIT: ${self.daily_pnl:+.2f}. "
+                    "Trading paused until the next trading day."
+                )
                 return
+
+            if self.market_type == 'iqoption' and self.daily_loss_limit > 0:
+                remaining_loss_budget = self.daily_loss_limit + self.daily_pnl
+                if remaining_loss_budget <= 0:
+                    self.trading_halted = True
+                    self.monitor.logger.warning(
+                        "No daily loss budget remains. Trading paused until the next trading day."
+                    )
+                    return
                 
             # HARD RSI FILTER
             if action == TradeAction.GO_LONG and current_rsi > 80:
@@ -812,11 +958,14 @@ class TradingBot:
                     if self.market_type == 'iqoption':
                         base_qty = self.config.get('risk', {}).get('binary_options', {}).get('stake_amount', 10)
                         qty = base_qty * self.martingale_multiplier
+                        if self.daily_loss_limit > 0:
+                            qty = min(qty, self.daily_loss_limit + self.daily_pnl)
                         sl_price, tp_price = None, None
                     # Use Forex specific ATR calculation
                     elif self.market_type in ['forex', 'synthetics'] and hasattr(self.risk_manager, 'calculate_forex_position_size') and df is not None:
                         atr = df['ATR'].iloc[-1]
-                        qty = self.risk_manager.calculate_forex_position_size(equity, symbol, atr=atr)
+                        action_confidence = raw_confidence if action == TradeAction.GO_LONG else (1.0 - raw_confidence)
+                        qty = self.risk_manager.calculate_forex_position_size(equity, symbol, atr=atr, confidence=action_confidence)
                         exit_prices = self.risk_manager.get_forex_exit_prices(current_price, symbol, 'long', atr=atr)
                         sl_price = exit_prices['stop_loss']
                         tp_price = exit_prices['take_profit']
@@ -826,7 +975,8 @@ class TradingBot:
                         sl_price = exit_prices['stop_loss']
                         tp_price = exit_prices['take_profit']
                         # Calculate position size based on risk and stop loss
-                        qty = self.risk_manager.calculate_position_size(equity, current_price, sl_price, 'long')
+                        action_confidence = raw_confidence if action == TradeAction.GO_LONG else (1.0 - raw_confidence)
+                        qty = self.risk_manager.calculate_position_size(equity, current_price, sl_price, 'long', confidence=action_confidence)
 
                 except Exception as e:
                      self.monitor.logger.error(f"Error calculating size/exits: {e}")
@@ -878,11 +1028,14 @@ class TradingBot:
                     if self.market_type == 'iqoption':
                         base_qty = self.config.get('risk', {}).get('binary_options', {}).get('stake_amount', 10)
                         qty = base_qty * self.martingale_multiplier
+                        if self.daily_loss_limit > 0:
+                            qty = min(qty, self.daily_loss_limit + self.daily_pnl)
                         sl_price, tp_price = None, None
                     # Use Forex specific ATR calculation
                     elif self.market_type in ['forex', 'synthetics'] and hasattr(self.risk_manager, 'calculate_forex_position_size') and df is not None:
                         atr = df['ATR'].iloc[-1]
-                        qty = self.risk_manager.calculate_forex_position_size(equity, symbol, atr=atr)
+                        action_confidence = (1.0 - raw_confidence) if action == TradeAction.GO_SHORT else raw_confidence
+                        qty = self.risk_manager.calculate_forex_position_size(equity, symbol, atr=atr, confidence=action_confidence)
                         exit_prices = self.risk_manager.get_forex_exit_prices(current_price, symbol, 'short', atr=atr)
                         sl_price = exit_prices['stop_loss']
                         tp_price = exit_prices['take_profit']
@@ -892,7 +1045,8 @@ class TradingBot:
                         sl_price = exit_prices['stop_loss']
                         tp_price = exit_prices['take_profit']
                         # Calculate position size based on risk and stop loss
-                        qty = self.risk_manager.calculate_position_size(equity, current_price, sl_price, 'short')
+                        action_confidence = (1.0 - raw_confidence) if action == TradeAction.GO_SHORT else raw_confidence
+                        qty = self.risk_manager.calculate_position_size(equity, current_price, sl_price, 'short', confidence=action_confidence)
 
                 except Exception as e:
                      self.monitor.logger.error(f"Error calculating size/exits: {e}")
@@ -1017,10 +1171,12 @@ class TradingBot:
             
             with open(f'{state_dir}/bot_status.json', 'w') as f:
                 json.dump(state, f, indent=2)
+                
+            # Notify the dashboard whenever state changes!
+            self._notify_dashboard()
+            
         except Exception as e:
             self.monitor.logger.error(f"Error saving state: {e}")
-
-
     def check_exits(self):
         """
         Lightweight check running every second.
@@ -1139,8 +1295,8 @@ class TradingBot:
         for order_id, order_info in self.pending_binary_orders.items():
             elapsed = time.time() - order_info['timestamp']
             
-            # Binary options expire in exactly 120s. We force-clear the position at 125s.
-            if elapsed > 125:
+            expiration_seconds = self.config.get('bot', {}).get('expiration_time_minutes', 2) * 60
+            if elapsed > expiration_seconds + 5:
                 symbol = order_info['symbol']
                 qty = order_info['qty']
                 
@@ -1155,19 +1311,47 @@ class TradingBot:
                     try:
                         # Fallback to the strict check_win_v3 which blocks but gets the result
                         res, prof = self.executor.api.check_win_v3(int(oid))
+                        actual_pnl = 0.0
                         if res == 'win':
                             self.monitor.logger.info(f"[{sym}] BINARY WIN (+${prof:.2f}). Resetting Martingale.")
                             self.martingale_multiplier = 1
                             self.daily_pnl += prof
+                            actual_pnl = prof
                         elif res == 'equal':
                             self.monitor.logger.info(f"[{sym}] BINARY TIE ($0). Keeping Martingale.")
+                            actual_pnl = 0.0
                         else:
                             self.monitor.logger.warning(f"[{sym}] BINARY LOSS (-${amount:.2f}). Doubling Martingale.")
                             self.martingale_multiplier = min(self.martingale_multiplier * 2.0, 8.0)
                             self.daily_pnl -= amount
-                    except Exception:
-                        pass
-                
+                            actual_pnl = -amount
+
+                        if self.daily_profit_target > 0 and self.daily_pnl >= self.daily_profit_target:
+                            self.trading_halted = True
+                            self.monitor.logger.info(
+                                f"DAILY PROFIT TARGET HIT: ${self.daily_pnl:+.2f} "
+                                f"(target ${self.daily_profit_target:.2f}). "
+                                "Trading paused until the next trading day."
+                            )
+                        elif self.daily_loss_limit > 0 and self.daily_pnl <= -self.daily_loss_limit:
+                            self.trading_halted = True
+                            self.monitor.logger.warning(
+                                f"DAILY LOSS LIMIT HIT: ${self.daily_pnl:+.2f} "
+                                f"(limit ${self.daily_loss_limit:.2f}). "
+                                "Trading paused until the next trading day."
+                            )
+                            
+                        # UPDATE DATABASE
+                        self.monitor.update_trade(str(oid), actual_pnl)
+                        
+                        # SAVE STATE & NOTIFY WS
+                        self.save_state()
+                        self._notify_dashboard()
+                        
+                    except Exception as e:
+                        self.monitor.logger.error(f"Error checking binary win: {e}")
+                        
+
                 import threading
                 t = threading.Thread(target=_bg_check, args=(order_id, symbol, qty))
                 t.daemon = True
@@ -1177,6 +1361,14 @@ class TradingBot:
             if oid in self.pending_binary_orders:
                 del self.pending_binary_orders[oid]
 
+    def _notify_dashboard(self):
+        """Send a quick HTTP ping to api.py to trigger a WebSocket broadcast."""
+        try:
+            import requests
+            requests.post("http://127.0.0.1:5000/api/internal/notify", timeout=1)
+        except:
+            pass
+
     def start(self):
         """
         Main execution loop (Smart Loop).
@@ -1184,6 +1376,25 @@ class TradingBot:
         - Analysis interval: 5 minutes (approx)
         """
         self.monitor.logger.info("Bot started in Smart Loop Mode. Ticking every 1s...")
+        print("="*60)
+        print("  OPERATION $100 : WEEKLY CHALLENGE")
+        print("="*60)
+        
+        try:
+            from database import Database
+            db = Database()
+            weekly_pnl = db.get_weekly_pnl()
+            remaining = 100.0 - weekly_pnl
+            
+            print(f"  Current Weekly Profit : ${weekly_pnl:.2f}")
+            if remaining > 0:
+                print(f"  Target Remaining      : ${remaining:.2f} to hit $100")
+            else:
+                print(f"  Target Achieved!      : +${abs(remaining):.2f} OVER GOAL!")
+        except Exception as e:
+            print(f"  Could not load weekly goal stats: {e}")
+            
+        print("="*60)
         print(f"Bot started. Press Ctrl+C to stop.")
         
         last_analysis_time = 0

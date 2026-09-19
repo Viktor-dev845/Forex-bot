@@ -5,7 +5,12 @@
         "initial_capital": 200,
         "trading_interval_seconds": 60,
         "seq_length": 30,
-        "expiration_time_minutes": 5
+        "expiration_time_minutes": 5,
+        "trading_hours": {
+            "enabled": false,
+            "start": "08:00",
+            "end": "19:00"
+        }
     },
     "markets": {
         "stock": {
@@ -32,7 +37,9 @@
         },
         "iqoption": {
             "symbols": [
-                "EURGBP"
+                "GBPUSD-OTC",
+                "EURAUD",
+                "EURUSD-OTC"
             ]
         }
     },
@@ -42,7 +49,10 @@
         "stop_loss_pct": 0.02,
         "take_profit_pct": 0.04,
         "max_open_positions": 3,
-        "min_confidence": 0.58,
+        "min_confidence": 0.51,
+        "daily_profit_target": 20.0,
+        "daily_loss_limit": 15.0,
+        "iqoption_stake": 5.0,
         "forex_risk": {
             "risk_per_trade_pct": 0.01,
             "stop_loss_pips": 20,
@@ -53,12 +63,17 @@
         }
     },
     "model": {
-        "strategy": "ensemble",
+        "strategy": "any_strong_signal",
         "type": "lstm",
-        "path": "models/EURUSD-OTC_lstm.pth",
+        "path": "models/EURUSD_lstm.pth",
+        "ensemble": {
+            "min_model_confidence": 0.51,
+            "require_model_agreement": true,
+            "counter_trend_confidence": 0.55
+        },
         "any_strong_signal": {
-            "buy_threshold": 0.58,
-            "sell_threshold": 0.42
+            "buy_threshold": 0.6,
+            "sell_threshold": 0.4
         },
         "lstm": {
             "hidden_size": 32,

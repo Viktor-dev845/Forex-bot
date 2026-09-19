@@ -12,7 +12,7 @@ def test_forex_risk_manager():
     # Setup
     forex_params = ForexRiskParameters(
         risk_per_trade_pct=0.01,  # Risk 1%
-        stop_loss_pips=50,
+        stop_loss_atr_multiplier=1.5,
         risk_reward_ratio=2.0
     )
     params = RiskParameters(forex_risk=forex_params)
@@ -25,7 +25,8 @@ def test_forex_risk_manager():
     # Expectation: Risking 1% of $10k is $100. With a 50 pip SL and ~$1/pip value,
     # we expect $100 / (50 * $1) = 2 mini lots, which is 20,000 units.
     expected_units = 20000
-    units = rm.calculate_forex_position_size(portfolio_value, symbol)
+    atr_val = 0.0050
+    units = rm.calculate_forex_position_size(portfolio_value, symbol, atr=atr_val)
     if units == expected_units:
         print(f"   ✓ Position Sizing: Correctly calculated {units} units.")
     else:

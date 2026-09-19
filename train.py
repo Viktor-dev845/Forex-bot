@@ -187,4 +187,6 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=100)
     args = parser.parse_args()
 
-    train_model(ticker=args.ticker, epochs=args.epochs)
+    result = train_model(ticker=args.ticker, epochs=args.epochs)
+    if result is None:
+        raise SystemExit(1)

@@ -73,11 +73,21 @@ class RiskManager:
             return False, f"Confidence too low ({prediction_confidence:.2%} < {self.params.min_confidence:.2%})"
         return True, "OK"
     
-    def calculate_position_size(self, portfolio_value: float, entry_price: float, stop_loss_price: float, position_type: str) -> float:
+    def _get_confidence_multiplier(self, confidence: float) -> float:
+        """Scale risk based on confidence. Base risk at min_confidence, scales up to 2x."""
+        if confidence <= self.params.min_confidence:
+            return 1.0
+        # Scale from min_confidence to 1.0 linearly, mapping to 1.0x to 2.0x multiplier
+        max_multiplier = 2.0
+        scale = (confidence - self.params.min_confidence) / (1.0 - self.params.min_confidence)
+        return 1.0 + (max_multiplier - 1.0) * scale
+
+    def calculate_position_size(self, portfolio_value: float, entry_price: float, stop_loss_price: float, position_type: str, confidence: float = 0.5) -> float:
         """
-        Calculate how many shares/units to buy based on fixed-risk.
+        Calculate how many shares/units to buy based on fixed-risk and confidence.
         """
-        risk_amount_per_trade = portfolio_value * self.params.risk_per_trade_pct
+        multiplier = self._get_confidence_multiplier(confidence)
+        risk_amount_per_trade = portfolio_value * self.params.risk_per_trade_pct * multiplier
         
         if position_type == 'long':
             per_share_risk = entry_price - stop_loss_price
@@ -92,15 +102,16 @@ class RiskManager:
         logger.info(f"Stock Position Size: Risking ${risk_amount_per_trade:.2f}, SL: ${stop_loss_price:.2f}, Size: {shares:.2f} shares")
         return max(shares, 0.0)
         
-    def calculate_forex_position_size(self, portfolio_value: float, symbol: str, atr: float) -> int:
+    def calculate_forex_position_size(self, portfolio_value: float, symbol: str, atr: float, confidence: float = 0.5) -> int:
         """
-        Calculate position size in lots for Forex based on ATR.
+        Calculate position size in lots for Forex based on ATR and confidence.
         """
         pip_size = self._get_pip_size(symbol)
         pip_value_per_mini_lot = 1.0  # Simplified assumption for mini lots (10k units)
 
         # 1. Amount to risk in account currency (e.g., USD)
-        risk_amount = portfolio_value * self.params.forex_risk.risk_per_trade_pct
+        multiplier = self._get_confidence_multiplier(confidence)
+        risk_amount = portfolio_value * self.params.forex_risk.risk_per_trade_pct * multiplier
         
         # 2. Stop loss distance in pips, based on ATR
         stop_loss_pips = (atr / pip_size) * self.params.forex_risk.stop_loss_atr_multiplier

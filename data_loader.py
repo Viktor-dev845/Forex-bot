@@ -6,8 +6,56 @@ This script fetches historical candle data for synthetic indices from Deriv's pl
 import asyncio
 from deriv_api import DerivAPI
 import pandas as pd
+import numpy as np
+
+try:
+    import yfinance as yf
+except ImportError:
+    yf = None
 
 from utils.config_loader import load_config
+
+
+def fetch_external_forex_data(symbol, period="60d", interval="5m"):
+    """Fetch independent real-market forex candles for model training."""
+    if yf is None:
+        raise ImportError("yfinance is required for external forex training data")
+
+    clean_symbol = symbol.replace("-OTC", "")
+    if "BTC" in clean_symbol.upper() or "ETH" in clean_symbol.upper():
+        yahoo_symbol = clean_symbol.replace("USD", "-USD")
+    else:
+        yahoo_symbol = clean_symbol if clean_symbol.endswith("=X") else f"{clean_symbol}=X"
+    data = yf.download(
+        yahoo_symbol,
+        period=period,
+        interval=interval,
+        auto_adjust=False,
+        progress=False,
+        threads=False,
+    )
+
+    if data is None or data.empty:
+        raise ValueError(f"No external market data returned for {yahoo_symbol}")
+
+    if isinstance(data.columns, pd.MultiIndex):
+        data.columns = data.columns.get_level_values(0)
+
+    required_columns = ["Open", "High", "Low", "Close"]
+    missing_columns = [column for column in required_columns if column not in data.columns]
+    if missing_columns:
+        raise ValueError(f"External data missing columns: {missing_columns}")
+
+    if "Volume" not in data.columns:
+        data["Volume"] = 1
+    data = data[["Open", "High", "Low", "Close", "Volume"]].copy()
+    data["Volume"] = data["Volume"].replace(0, np.nan).fillna(1)
+    data = data.dropna().sort_index()
+
+    if len(data) < 250:
+        raise ValueError(f"Only {len(data)} external candles returned for {symbol}; need at least 250")
+
+    return data
 
 async def fetch_historical_data(symbol="R_75", time_interval="1h", max_candles=5000):
     """
@@ -128,7 +176,7 @@ async def fetch_historical_data(symbol="R_75", time_interval="1h", max_candles=5
         print("Disconnected from Deriv API.")
 
 
-async def fetch_iqoption_data(symbol="EURUSD-OTC", time_interval="5m", max_candles=1000):
+async def fetch_iqoption_data(symbol="EURUSD", time_interval="5m", max_candles=1000):
     """
     Fetches historical candle data from IQ Option.
     """

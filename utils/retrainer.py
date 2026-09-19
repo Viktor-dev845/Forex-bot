@@ -77,10 +77,14 @@ class RetrainingManager:
             self.is_training[symbol] = False
             
         # Track consecutive losses for rapid adaptation
-        if symbol not in getattr(self, 'consecutive_losses', {}):
-            if not hasattr(self, 'consecutive_losses'):
-                self.consecutive_losses = {}
+        if getattr(self, 'consecutive_losses', None) is None:
+            self.consecutive_losses = {}
+            
+        if symbol not in self.consecutive_losses:
             self.consecutive_losses[symbol] = 0
+            
+        is_win = pnl > 0
+        self.trade_history[symbol].append(1 if is_win else 0)
             
         if is_win:
             self.consecutive_losses[symbol] = 0
@@ -89,11 +93,11 @@ class RetrainingManager:
             self.logger.warning(f"[{symbol}] Consecutive Losses: {self.consecutive_losses[symbol]}")
         
         # Log current stats
-        win_rate = sum(self.trade_history[symbol]) / len(self.trade_history[symbol])
-        self.logger.info(f"[{symbol}] Trade recorded. Win Rate (Last {len(self.trade_history[symbol])}): {win_rate:.1%}")
-        
-        # Check if we need to retrain
-        self._check_and_trigger(symbol, win_rate)
+        if len(self.trade_history[symbol]) > 0:
+            win_rate = sum(self.trade_history[symbol]) / len(self.trade_history[symbol])
+            self.logger.info(f"[{symbol}] Trade recorded. Win Rate (Last {len(self.trade_history[symbol])}): {win_rate:.1%}")
+            # Check if we need to retrain
+            self._check_and_trigger(symbol, win_rate)
 
     def _check_and_trigger(self, symbol: str, win_rate: float):
         """Check criteria and trigger retraining if needed."""
