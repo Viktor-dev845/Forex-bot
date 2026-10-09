@@ -220,17 +220,6 @@ class EnsembleStrategy(AIStrategy):
                         f"{weighted_pred:.2%} confidence"
                     )
 
-            # Apply Safety Filter
-            if symbol and action != TradeAction.DO_NOTHING:
-                sym_upper = symbol.upper()
-                if "BOOM" in sym_upper and action == TradeAction.GO_LONG:
-                    # Log internally if possible, but here we just block
-                    self.logger.info(f"Signal skipped for {symbol}: LONG blocked by BOOM safety filter")
-                    return TradeAction.DO_NOTHING # Block Buy on Boom
-                if "CRASH" in sym_upper and action == TradeAction.GO_SHORT:
-                    self.logger.info(f"Signal skipped for {symbol}: SHORT blocked by CRASH safety filter")
-                    return TradeAction.DO_NOTHING # Block Sell on Crash
-            
             return action
         
         return TradeAction.DO_NOTHING
@@ -300,16 +289,16 @@ class AnyStrongSignalStrategy(EnsembleStrategy):
                 action = TradeAction.GO_SHORT
                 self.logger.info(f"Strong SELL signal: {min_prediction:.2%} (threshold: {self.sell_threshold:.2%})")
             
-            # 1H Trend Filter removed by user request for testing phase
+            # 15m Trend Filter removed by user request to unblock signals
+            # if trend_context and action != TradeAction.DO_NOTHING:
+            #     if trend_context == 'UP' and action == TradeAction.GO_SHORT:
+            #         self.logger.info(f"Signal BLOCKED by 15m Trend (Context: UP, Action: SHORT)")
+            #         return TradeAction.DO_NOTHING
+            #         
+            #     if trend_context == 'DOWN' and action == TradeAction.GO_LONG:
+            #         self.logger.info(f"Signal BLOCKED by 15m Trend (Context: DOWN, Action: LONG)")
+            #         return TradeAction.DO_NOTHING
 
-            # Apply Symbol Safety Filter
-            if symbol and action != TradeAction.DO_NOTHING:
-                sym_upper = symbol.upper()
-                if "BOOM" in sym_upper and action == TradeAction.GO_LONG:
-                    return TradeAction.DO_NOTHING
-                if "CRASH" in sym_upper and action == TradeAction.GO_SHORT:
-                    return TradeAction.DO_NOTHING
-            
             return action
         
         return TradeAction.DO_NOTHING

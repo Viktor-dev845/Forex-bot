@@ -22,18 +22,16 @@ def fetch_external_forex_data(symbol, period="60d", interval="5m"):
         raise ImportError("yfinance is required for external forex training data")
 
     clean_symbol = symbol.replace("-OTC", "")
-    if "BTC" in clean_symbol.upper() or "ETH" in clean_symbol.upper():
+    crypto_symbols = ["BTC", "ETH", "LTC", "BCH", "XRP", "EOS", "DOGE"]
+    if any(crypto in clean_symbol.upper() for crypto in crypto_symbols):
         yahoo_symbol = clean_symbol.replace("USD", "-USD")
     else:
         yahoo_symbol = clean_symbol if clean_symbol.endswith("=X") else f"{clean_symbol}=X"
-    data = yf.download(
-        yahoo_symbol,
-        period=period,
-        interval=interval,
-        auto_adjust=False,
-        progress=False,
-        threads=False,
-    )
+    try:
+        ticker = yf.Ticker(yahoo_symbol)
+        data = ticker.history(period=period, interval=interval, auto_adjust=False)
+    except Exception as e:
+        raise ValueError(f"yfinance fetch failed: {e}")
 
     if data is None or data.empty:
         raise ValueError(f"No external market data returned for {yahoo_symbol}")

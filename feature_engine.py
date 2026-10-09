@@ -97,12 +97,10 @@ class FeatureEngine:
         for i in range(1, 6):
             data[f'Log_Return_Lag_{i}'] = data['Log_Return'].shift(i).fillna(0)
 
-        # --- Fast Fourier Transform (FFT) Smoothing ---
-        # Extracts dominant cyclical trends without the lag of moving averages
-        close_fft = np.fft.fft(np.asarray(data['Close'].tolist()))
-        fft_list = np.copy(close_fft)
-        fft_list[15:-15] = 0  # Keep only the lowest 15 frequencies (strongest macro trends)
-        data['FFT_Smoothed'] = np.fft.ifft(fft_list).real
+        # --- Causal Trend Smoothing (FIXED: replaced FFT to eliminate lookahead bias) ---
+        # FFT on the full dataset is a textbook lookahead leak — it uses future data.
+        # Replaced with a causal 20-period rolling mean (strictly backward-looking).
+        data['FFT_Smoothed'] = data['Close'].rolling(window=20, min_periods=1).mean()
         data['Dist_FFT'] = (data['Close'] - data['FFT_Smoothed']) / data['Close']
 
         # --- 2. Trend & Efficiency ---
@@ -171,12 +169,11 @@ class FeatureEngine:
 
         # --- 5. Institutional Indicators (NEW) ---
         
-        # VWAP (Volume Weighted Average Price) - Intraday mainly, but valid for sessions
-        # Approximation: Cumulative(Price * Volume) / Cumulative(Volume)
-        # We reset on daily basis roughly by using a large rolling window or just cumulative for the dataset if short
-        v = data['Volume'].replace(0, 1) # Avoid div by zero
+        # VWAP (FIXED: rolling 24-period window — strictly backward-looking, no future leakage)
+        # Cumulative VWAP over the full dataset was leaking future data into historical rows.
+        v = data['Volume'].replace(0, 1)
         tp = (data['High'] + data['Low'] + data['Close']) / 3
-        data['VWAP'] = (tp * v).cumsum() / v.cumsum()
+        data['VWAP'] = (tp * v).rolling(window=24, min_periods=1).sum() / v.rolling(window=24, min_periods=1).sum()
         data['Dist_VWAP'] = (data['Close'] - data['VWAP']) / data['VWAP']
 
         # SuperTrend
@@ -271,6 +268,27 @@ class FeatureEngine:
         data['BB_Lower'] = bb.bollinger_lband()
         data['BB_Mid'] = bb.bollinger_mavg()
         data['BB_PctB'] = bb.bollinger_pband()  # %B indicator (0-1 scale)
+
+        # --- 8. Smart Money Concepts (SMC) & Institutional Features ---
+        
+        # 1. Fair Value Gaps (FVG)
+        # Bullish FVG: Low[t] > High[t-2]
+        data['FVG_Bull'] = np.where(data['Low'] > data['High'].shift(2), data['Low'] - data['High'].shift(2), 0)
+        # Bearish FVG: High[t] < Low[t-2]
+        data['FVG_Bear'] = np.where(data['High'] < data['Low'].shift(2), data['Low'].shift(2) - data['High'], 0)
+        
+        # 2. Liquidity Sweeps (Proxy)
+        # Sweep High: Current high > rolling 10-period high, but closes below open
+        rolling_high = data['High'].shift(1).rolling(10).max()
+        data['Sweep_High'] = np.where((data['High'] > rolling_high) & (data['Close'] < data['Open']), 1, 0)
+        # Sweep Low: Current low < rolling 10-period low, but closes above open
+        rolling_low = data['Low'].shift(1).rolling(10).min()
+        data['Sweep_Low'] = np.where((data['Low'] < rolling_low) & (data['Close'] > data['Open']), 1, 0)
+        
+        # 3. Chaikin Money Flow (CMF)
+        mf_multiplier = ((data['Close'] - data['Low']) - (data['High'] - data['Close'])) / (data['High'] - data['Low'] + 1e-10)
+        mf_volume = mf_multiplier * data['Volume']
+        data['CMF'] = mf_volume.rolling(20).sum() / (data['Volume'].rolling(20).sum() + 1e-10)
 
         # --- Cleanup ---
         # Instead of generic dropna, we drop only the initialization rows

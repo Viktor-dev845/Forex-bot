@@ -48,7 +48,7 @@ class DerivWebSocketClient:
         """
         self.symbols = symbols
         self.api_token = api_token
-        self.ws_url = "wss://ws.derivws.com/websockets/v3?app_id=344Jxh9ST3khy7uu8Z3Ic"
+        self.ws_url = "wss://ws.derivws.com/websockets/v3?app_id=1089"
         
         # Thread-safe price storage
         self.prices: Dict[str, float] = {}

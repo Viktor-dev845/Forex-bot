@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ForexRiskParameters:
     """Configuration for forex-specific risk."""
-    risk_per_trade_pct: float = 0.01   # Risk 1% of account per trade
-    stop_loss_atr_multiplier: float = 1.5  # Stop loss distance in multiples of ATR
+    risk_per_trade_pct: float = 0.05   # Risk 5% of account per trade
+    stop_loss_atr_multiplier: float = 2.5  # Stop loss distance in multiples of ATR
     risk_reward_ratio: float = 2.0
 
 @dataclass
@@ -102,12 +102,17 @@ class RiskManager:
         logger.info(f"Stock Position Size: Risking ${risk_amount_per_trade:.2f}, SL: ${stop_loss_price:.2f}, Size: {shares:.2f} shares")
         return max(shares, 0.0)
         
-    def calculate_forex_position_size(self, portfolio_value: float, symbol: str, atr: float, confidence: float = 0.5) -> int:
+    def calculate_forex_position_size(self, portfolio_value: float, symbol: str, atr: float, confidence: float = 0.5) -> float:
         """
         Calculate position size in lots for Forex based on ATR and confidence.
         """
         pip_size = self._get_pip_size(symbol)
-        pip_value_per_mini_lot = 1.0  # Simplified assumption for mini lots (10k units)
+        
+        # Crypto vs Forex standard math
+        crypto_symbols = ["BTC", "ETH", "LTC", "BCH", "XRP", "EOS", "DOGE"]
+        synthetic_keywords = ["BOOM", "CRASH", "VOLATILITY", "STEP", "JUMP"]
+        is_crypto_or_synth = any(crypto in symbol.upper() for crypto in crypto_symbols) or any(syn in symbol.upper() for syn in synthetic_keywords)
+        pip_value = 1.0 if is_crypto_or_synth else 10.0 # Standard lot pip value for forex is ~$10. For Crypto/Synthetics it is $1
 
         # 1. Amount to risk in account currency (e.g., USD)
         multiplier = self._get_confidence_multiplier(confidence)
@@ -117,23 +122,42 @@ class RiskManager:
         stop_loss_pips = (atr / pip_size) * self.params.forex_risk.stop_loss_atr_multiplier
         
         # 3. Value of stop loss in account currency
-        stop_loss_value = stop_loss_pips * pip_value_per_mini_lot
+        stop_loss_value = stop_loss_pips * pip_value
         
         if stop_loss_value <= 0:
             logger.warning(f"[{symbol}] Invalid stop loss value ({stop_loss_value}), cannot calculate position size.")
-            return 0
+            return 0.0
             
-        # 4. Number of mini lots to trade
-        num_mini_lots = int(risk_amount / stop_loss_value)
+        # OANDA expects units (100000), MT5 expects lots (0.01).
+        # We are using MT5, so we MUST return lots.
+        lots = risk_amount / stop_loss_value
         
-        # OANDA and MT5 expect units, not lots. 1 mini lot = 10,000 units.
-        units = num_mini_lots * 10000
-        
-        logger.info(f"Forex Position Size: Risking ${risk_amount:.2f}, SL: {stop_loss_pips:.1f} pips (ATR Multiplier: {self.params.forex_risk.stop_loss_atr_multiplier}), Size: {units} units")
-        return max(units, 0)
+        # Enforce Synthetic Indices minimum lot sizes to prevent MT5 Invalid Volume (10014)
+        sym_up = symbol.upper()
+        if "CRASH" in sym_up or "BOOM" in sym_up:
+            lots = max(lots, 0.2)
+            return round(lots, 2)
+        elif "75" in sym_up:
+            lots = max(lots, 0.01)
+            return round(lots, 3)
+        elif "100" in sym_up:
+            lots = max(lots, 0.2)
+            return round(lots, 2)
+        elif "VOLATILITY" in sym_up or "INDEX" in sym_up or "R_" in sym_up:
+            lots = max(lots, 0.01)
+            return round(lots, 2)
+            
+        logger.info(f"Forex Position Size: Risking ${risk_amount:.2f}, SL: {stop_loss_pips:.1f} pips, Size: {lots:.2f} lots")
+        return round(max(lots, 0.01), 2)
     
     def _get_pip_size(self, symbol: str) -> float:
         """Returns the pip size for a given symbol. JPY pairs are different."""
+        crypto_symbols = ["BTC", "ETH", "LTC", "BCH", "XRP", "EOS", "DOGE"]
+        if any(crypto in symbol.upper() for crypto in crypto_symbols):
+            return 1.0
+        synthetic_keywords = ["BOOM", "CRASH", "VOLATILITY", "STEP", "JUMP"]
+        if any(syn in symbol.upper() for syn in synthetic_keywords):
+            return 1.0 # Synthetics trade on raw points, not fractional pips
         return 0.0001 if 'JPY' not in symbol.upper() else 0.01
 
     def get_forex_exit_prices(self, entry_price: float, symbol: str, position_type: str, atr: float) -> dict:

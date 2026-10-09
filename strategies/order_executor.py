@@ -75,6 +75,10 @@ class OrderExecutor(ABC):
     def get_open_positions(self) -> list:
         pass
 
+    def close_position(self, symbol: str, order_id: Optional[str] = None) -> bool:
+        """Close an open position. For binary options, this sells the option early."""
+        pass
+
 
 class PaperTradingExecutor(OrderExecutor):
     """
@@ -1107,15 +1111,11 @@ class MT5Executor(OrderExecutor):
                 
 
                 positions_list.append({
-
                     "symbol": symbol_name,
-
                     "qty": float(pos.volume),
-
                     "side": "long" if pos.type == mt5.POSITION_TYPE_BUY else "short",
-
-                    "entry_price": float(pos.price_open)
-
+                    "entry_price": float(pos.price_open),
+                    "order_id": str(pos.ticket)
                 })
 
         except Exception as e:
@@ -1123,6 +1123,50 @@ class MT5Executor(OrderExecutor):
             logger.error(f"[MT5] Failed to get open positions: {e}")
 
         return positions_list
+
+    def close_position(self, symbol: str, order_id: Optional[str] = None) -> bool:
+        """Close a specific position by ticket on MT5."""
+        import MetaTrader5 as mt5
+        
+        if not order_id:
+            logger.error(f"[MT5] Cannot close position without order_id (ticket number) for {symbol}")
+            return False
+            
+        try:
+            ticket = int(order_id)
+        except ValueError:
+            logger.error(f"[MT5] Invalid order_id format for ticket: {order_id}")
+            return False
+            
+        symbol_mapped = self._map_symbol(symbol)
+        position = mt5.positions_get(ticket=ticket)
+        
+        if not position or len(position) == 0:
+            logger.warning(f"[MT5] Position {ticket} not found or already closed.")
+            return True
+            
+        pos = position[0]
+        tick = mt5.symbol_info_tick(symbol_mapped)
+        
+        request = {
+            "action": mt5.TRADE_ACTION_DEAL,
+            "position": ticket,
+            "symbol": symbol_mapped,
+            "volume": pos.volume,
+            "type": mt5.ORDER_TYPE_SELL if pos.type == mt5.POSITION_TYPE_BUY else mt5.ORDER_TYPE_BUY,
+            "price": tick.bid if pos.type == mt5.POSITION_TYPE_BUY else tick.ask,
+            "type_filling": mt5.ORDER_FILLING_FOK,
+            "deviation": 20,
+            "comment": "python script close"
+        }
+        
+        result = mt5.order_send(request)
+        if result.retcode == mt5.TRADE_RETCODE_DONE:
+            logger.info(f"[MT5] Position {ticket} closed successfully.")
+            return True
+        else:
+            logger.error(f"[MT5] Failed to close position {ticket}, retcode={result.retcode}, comment={result.comment}")
+            return False
 
 
 
@@ -1299,7 +1343,23 @@ class IQOptionExecutor(OrderExecutor):
 
     def get_account(self) -> dict:
 
-        balance = self.api.get_balance()
+        import threading
+        result = [None]
+        def fetch_balance():
+            try:
+                result[0] = self.api.get_balance()
+            except:
+                pass
+        
+        t = threading.Thread(target=fetch_balance)
+        t.daemon = True
+        t.start()
+        t.join(timeout=5.0)
+        
+        balance = result[0] if result[0] is not None else 0.0
+        
+        if t.is_alive():
+            logger.error("CRITICAL: IQ Option get_balance() deadlocked! Returning 0.0 balance.")
 
         return {
 
@@ -1316,5 +1376,51 @@ class IQOptionExecutor(OrderExecutor):
         
 
     def get_open_positions(self) -> list:
-
         return []
+
+    def close_position(self, symbol: str, order_id: Optional[str] = None) -> bool:
+        """Sell a binary option early on IQ Option."""
+        if not order_id:
+            logger.error(f"[IQOPTION] Cannot close position early for {symbol} without order_id.")
+            return False
+            
+        try:
+            # We must pass order_id as a list of integers to sell_option
+            order_id_int = int(order_id)
+            self.api.sell_option([order_id_int])
+            logger.info(f"[IQOPTION] Successfully sold option {order_id} early for {symbol}.")
+            return True
+        except Exception as e:
+            logger.error(f"[IQOPTION] Failed to sell option {order_id} early: {e}")
+            return False
+
+    def is_asset_open(self, symbol: str) -> bool:
+        """Check if an asset is currently open for binary/turbo trading with a timeout."""
+        try:
+            import threading
+            
+            result = [None]
+            def fetch_open_time():
+                try:
+                    result[0] = self.api.get_all_open_time()
+                except:
+                    pass
+                    
+            t = threading.Thread(target=fetch_open_time)
+            t.daemon = True
+            t.start()
+            t.join(timeout=5.0) # 5 second timeout
+            
+            if t.is_alive() or result[0] is None:
+                logger.error(f"CRITICAL: Timeout fetching open time for {symbol}. Broker API is unresponsive. Rejecting pair to save time.")
+                return False # MUST return False. If the API is dead, we shouldn't waste 30 mins training!
+                
+            open_time = result[0]
+            
+            is_turbo = open_time.get('turbo', {}).get(symbol, {}).get('open', False)
+            is_binary = open_time.get('binary', {}).get(symbol, {}).get('open', False)
+            
+            return is_turbo or is_binary
+        except Exception as e:
+            logger.error(f"Error checking if asset is open: {e}")
+            return False

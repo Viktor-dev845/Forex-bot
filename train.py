@@ -15,15 +15,16 @@ from sklearn.model_selection import train_test_split
 import argparse
 
 from models.lstm_model import TradingLSTM, create_sequences
+from models.transformer_model import TradingTransformer
 from feature_engine import FeatureEngine
 
 
-def train_model(ticker="R_75", seq_length=30, epochs=100, batch_size=32, learning_rate=0.001):
+def train_model(ticker="R_75", model_type="lstm", seq_length=30, epochs=100, batch_size=32, learning_rate=0.001):
     """
     Complete training pipeline with local data and fine-tuning.
     """
     print("=" * 50)
-    print(f"LSTM Automated Retraining for {ticker}")
+    print(f"{model_type.upper()} Automated Retraining for {ticker}")
     print("=" * 50)
     
     # Step 1: Load Local Data
@@ -67,24 +68,43 @@ def train_model(ticker="R_75", seq_length=30, epochs=100, batch_size=32, learnin
         traceback.print_exc()
         return None
 
-    # Step 3: Create Sequences
-    print("\n[3/5] Creating sequences...")
-    # Target is the 'Close' price, which we want to predict
-    target_col_index = feature_columns.index('Close')
-    X, y = create_sequences(data, seq_length=seq_length, target_col_index=target_col_index)
+    # Step 3: Create Sequences with CORRECT binary classification labels
+    print("\n[3/5] Creating sequences with binary labels...")
+    # --- FIXED: Define y as a proper binary classification target ---
+    # y = 1: next candle close is LOWER than current close (profitable SELL for Boom/Crash)
+    # y = 0: next candle close is HIGHER or equal (price went up — bad for SELL)
+    close_col_index = feature_columns.index('Close')
+    
+    # Build sequences from data
+    X_seqs, y_binary = [], []
+    raw_close = df_normalized['Close'].values  # Use un-sequenced close for label construction
+    
+    for i in range(len(data) - seq_length - 1):
+        X_seqs.append(data[i : i + seq_length])
+        # Label: did the very next candle after the sequence close lower?
+        current_close = raw_close[i + seq_length - 1]
+        next_close = raw_close[i + seq_length]
+        y_binary.append(1.0 if next_close < current_close else 0.0)
+
+    X = np.array(X_seqs)
+    y = np.array(y_binary)
     
     if len(X) == 0:
         print("No sequences created. Check data length and sequence length.")
         return None
-        
-    # Split
+
+    # Report class balance
+    pos_rate = y.mean()
+    print(f"Class balance: {pos_rate*100:.1f}% DOWN candles, {(1-pos_rate)*100:.1f}% UP candles")
+
+    # Time-series split (NO shuffle — never mix future into past)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
     
     # Tensors
     X_train_t = torch.FloatTensor(X_train)
-    y_train_t = torch.FloatTensor(y_train)
+    y_train_t = torch.FloatTensor(y_train).unsqueeze(1)
     X_test_t = torch.FloatTensor(X_test)
-    y_test_t = torch.FloatTensor(y_test)
+    y_test_t = torch.FloatTensor(y_test).unsqueeze(1)
 
     train_dataset = TensorDataset(X_train_t, y_train_t)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -92,22 +112,29 @@ def train_model(ticker="R_75", seq_length=30, epochs=100, batch_size=32, learnin
     # Step 4: Initialize or Load Model
     print("\n[4/5] Initializing model...")
     input_size = X_train.shape[2]
-    model = TradingLSTM(input_size=input_size, hidden_size=32, num_layers=2, output_size=1) # Output size is 1 (predicting 'Close')
     
-    model_path = f"models/{ticker}_lstm.pth"
+    if model_type == "transformer":
+        model = TradingTransformer(input_size=input_size, d_model=64, nhead=4, num_layers=2, output_size=1)
+        model_path = f"models/{ticker}_transformer.pth"
+    else:
+        model = TradingLSTM(input_size=input_size, hidden_size=32, num_layers=2, output_size=1)
+        model_path = f"models/{ticker}_lstm.pth"
+        
     if os.path.exists(model_path):
         try:
             print(f"Loading existing weights from {model_path} for fine-tuning...")
-            checkpoint = torch.load(model_path)
-            # Check if input size matches
+            checkpoint = torch.load(model_path, weights_only=False)
             if checkpoint.get('input_size') == input_size:
                 model.load_state_dict(checkpoint['model_state_dict'])
+                print("Weights loaded successfully.")
             else:
                 print("Input size mismatch (new features?), starting fresh.")
         except Exception as e:
             print(f"Error loading checkpoint: {e}. Starting fresh.")
-    
-    criterion = nn.BCEWithLogitsLoss()
+
+    # Class-weighted loss to handle natural imbalance (spikes are rare events)
+    pos_weight = torch.tensor([(1 - pos_rate) / (pos_rate + 1e-9)])
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
@@ -184,9 +211,10 @@ def train_model(ticker="R_75", seq_length=30, epochs=100, batch_size=32, learnin
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--ticker", type=str, default="R_75")
+    parser.add_argument("--model", type=str, default="lstm", choices=["lstm", "transformer"])
     parser.add_argument("--epochs", type=int, default=100)
     args = parser.parse_args()
 
-    result = train_model(ticker=args.ticker, epochs=args.epochs)
+    result = train_model(ticker=args.ticker, model_type=args.model, epochs=args.epochs)
     if result is None:
         raise SystemExit(1)

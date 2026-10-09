@@ -50,7 +50,7 @@ class RetrainingManager:
         Returns normalized weights summing to 1.
         """
         if symbol not in self.model_predictions:
-            return {'xgboost': 0.5, 'lstm': 0.5}  # Default equal weights
+            return {'xgboost': 0.334, 'lstm': 0.333, 'transformer': 0.333}  # Default equal weights
             
         weights = {}
         for model_name, history in self.model_predictions[symbol].items():
@@ -66,7 +66,7 @@ class RetrainingManager:
         if total > 0:
             weights = {k: v/total for k, v in weights.items()}
         else:
-            weights = {'xgboost': 0.5, 'lstm': 0.5}
+            weights = {'xgboost': 0.334, 'lstm': 0.333, 'transformer': 0.333}
             
         return weights
 
