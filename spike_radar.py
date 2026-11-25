@@ -51,10 +51,9 @@ log = logging.getLogger("spike_radar")
 
 DERIV_APP_ID = os.environ.get("DERIV_APP_ID", "1089").strip()
 DERIV_WS_URLS = [
+    "wss://api.derivws.com/trading/v1/options/ws/public",
     f"wss://ws.derivws.com/websockets/v3?app_id={DERIV_APP_ID}&l=EN&brand=deriv",
     f"wss://green.derivws.com/websockets/v3?app_id={DERIV_APP_ID}&l=EN&brand=deriv",
-    f"wss://blue.derivws.com/websockets/v3?app_id={DERIV_APP_ID}&l=EN&brand=deriv",
-    f"wss://ws.binaryws.com/websockets/v3?app_id={DERIV_APP_ID}&l=EN&brand=deriv",
 ]
 BROWSER_ORIGIN = "https://app.deriv.com"
 BROWSER_UA = (
@@ -250,34 +249,20 @@ def start_health_server_if_cloud(radar: "SpikeRadar"):
 
         def do_GET(self):
             if self.path == "/diag":
-                out = {"render_region": os.environ.get("RENDER_REGION", "unknown"), "probes": []}
+                out = {
+                    "ws_connected": radar.ws_connected,
+                    "ws_url": radar.current_ws_url,
+                    "last_error": radar.last_error,
+                    "last_msg_types": radar.recent_msg_types[-10:],
+                    "last_raw_sample": radar.last_raw_sample,
+                    "candle_counts": {k: len(v) for k, v in radar.candles.items()},
+                }
                 try:
                     geo = requests.get("https://ipinfo.io/json", timeout=6).json()
                     out["ip_country"] = geo.get("country")
                     out["ip_region"] = geo.get("region")
-                    out["ip_org"] = geo.get("org")
                 except Exception as e:
                     out["geo_err"] = str(e)
-                for test_url in [
-                    "https://ws.derivws.com/websockets/v3?app_id=1089",
-                    "https://ws.derivws.com/websockets/v3?app_id=36544",
-                    "https://api.derivws.com/v1/health",
-                ]:
-                    try:
-                        r = requests.get(
-                            test_url,
-                            headers={"User-Agent": BROWSER_UA, "Origin": "https://app.deriv.com"},
-                            timeout=8,
-                        )
-                        out["probes"].append({
-                            "url": test_url,
-                            "status": r.status_code,
-                            "cf_ray": r.headers.get("cf-ray"),
-                            "server": r.headers.get("server"),
-                            "body": r.text[:250],
-                        })
-                    except Exception as e:
-                        out["probes"].append({"url": test_url, "err": str(e)})
                 body = json.dumps(out, indent=2).encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
@@ -333,6 +318,8 @@ class SpikeRadar:
         self.ws_connected = False
         self.current_ws_url = None
         self.last_error = None
+        self.recent_msg_types: List[str] = []
+        self.last_raw_sample: Optional[str] = None
 
     def get_live_snapshot(self) -> dict:
         snap = {}
@@ -605,49 +592,68 @@ class SpikeRadar:
                         f"CRASH1000 (Lower BB({self.cfg['bb_period']},{self.cfg['bb_std']}) + RSI<={self.cfg['crash_rsi_max']}) -> ntfy '{self.cfg['ntfy_topic']}'"
                     )
 
-                    got_history = set()
-                    async for raw in ws:
-                        data = json.loads(raw)
-                        if "error" in data:
-                            err_msg = data["error"].get("message", "Unknown WS error")
-                            self.last_error = err_msg
-                            log.error(f"Deriv WS Error: {err_msg}")
-                            continue
+                    async def _keepalive_ping():
+                        while True:
+                            await asyncio.sleep(45)
+                            try:
+                                await ws.send(json.dumps({"ping": 1}))
+                            except Exception:
+                                break
 
-                        msg_type = data.get("msg_type")
-                        if msg_type == "candles":
-                            sym = data.get("echo_req", {}).get("ticks_history")
-                            if sym in self.candles:
-                                self.candles[sym] = [
-                                    {
-                                        "epoch": int(c["epoch"]),
-                                        "open": float(c["open"]),
-                                        "high": float(c["high"]),
-                                        "low": float(c["low"]),
-                                        "close": float(c["close"]),
+                    ping_task = asyncio.create_task(_keepalive_ping())
+                    try:
+                        got_history = set()
+                        async for raw in ws:
+                            data = json.loads(raw)
+                            msg_type = data.get("msg_type", "unknown")
+                            self.recent_msg_types.append(msg_type)
+                            if len(self.recent_msg_types) > 20:
+                                del self.recent_msg_types[:-20]
+                            if msg_type != "ping":
+                                self.last_raw_sample = str(raw)[:300]
+
+                            if "error" in data:
+                                err_msg = data["error"].get("message", "Unknown WS error")
+                                self.last_error = err_msg
+                                log.error(f"Deriv WS Error: {err_msg}")
+                                continue
+
+                            if msg_type == "candles":
+                                echo = data.get("echo_req", {})
+                                sym = echo.get("ticks_history") or echo.get("underlying_symbol")
+                                if sym in self.candles:
+                                    self.candles[sym] = [
+                                        {
+                                            "epoch": int(c["epoch"]),
+                                            "open": float(c["open"]),
+                                            "high": float(c["high"]),
+                                            "low": float(c["low"]),
+                                            "close": float(c["close"]),
+                                        }
+                                        for c in data.get("candles", [])
+                                    ]
+                                    got_history.add(sym)
+                                    if len(got_history) == 2:
+                                        self._log_status_line()
+                                        if smoke_only:
+                                            log.info("[SMOKE TEST PASSED] Live Deriv stream & BB/RSI indicators verified!")
+                                            return
+
+                            elif msg_type == "ohlc":
+                                ohlc = data["ohlc"]
+                                sym = ohlc.get("symbol") or ohlc.get("underlying_symbol")
+                                if sym in self.candles:
+                                    bar = {
+                                        "epoch": int(ohlc["open_time"]),
+                                        "open": float(ohlc["open"]),
+                                        "high": float(ohlc["high"]),
+                                        "low": float(ohlc["low"]),
+                                        "close": float(ohlc["close"]),
                                     }
-                                    for c in data.get("candles", [])
-                                ]
-                                got_history.add(sym)
-                                if len(got_history) == 2:
-                                    self._log_status_line()
-                                    if smoke_only:
-                                        log.info("[SMOKE TEST PASSED] Live Deriv stream & BB/RSI indicators verified!")
-                                        return
-
-                        elif msg_type == "ohlc":
-                            ohlc = data["ohlc"]
-                            sym = ohlc["symbol"]
-                            if sym in self.candles:
-                                bar = {
-                                    "epoch": int(ohlc["open_time"]),
-                                    "open": float(ohlc["open"]),
-                                    "high": float(ohlc["high"]),
-                                    "low": float(ohlc["low"]),
-                                    "close": float(ohlc["close"]),
-                                }
-                                self._upsert_candle(sym, bar)
-                                self._evaluate_live(sym)
+                                    self._upsert_candle(sym, bar)
+                                    self._evaluate_live(sym)
+                    finally:
+                        ping_task.cancel()
 
             except KeyboardInterrupt:
                 log.info("Spike Radar stopped by user.")
