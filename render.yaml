@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: boom-crash-spike-radar
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements_radar.txt
+    startCommand: python -u spike_radar.py
+    healthCheckPath: /
+    envVars:
+      - key: NTFY_TOPIC
+        sync: false
+      - key: BOOM_RSI_MIN
+        value: "67.0"
+      - key: CRASH_RSI_MAX
+        value: "33.0"
+      - key: RADAR_SOURCE
+        value: ws
