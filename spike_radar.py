@@ -51,9 +51,16 @@ log = logging.getLogger("spike_radar")
 
 DERIV_APP_ID = os.environ.get("DERIV_APP_ID", "1089").strip()
 DERIV_WS_URLS = [
-    f"wss://ws.derivws.com/websockets/v3?app_id={DERIV_APP_ID}",
-    f"wss://ws.binaryws.com/websockets/v3?app_id={DERIV_APP_ID}",
+    f"wss://ws.derivws.com/websockets/v3?app_id={DERIV_APP_ID}&l=EN&brand=deriv",
+    f"wss://green.derivws.com/websockets/v3?app_id={DERIV_APP_ID}&l=EN&brand=deriv",
+    f"wss://blue.derivws.com/websockets/v3?app_id={DERIV_APP_ID}&l=EN&brand=deriv",
+    f"wss://ws.binaryws.com/websockets/v3?app_id={DERIV_APP_ID}&l=EN&brand=deriv",
 ]
+BROWSER_ORIGIN = "https://app.deriv.com"
+BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
 SYMBOL_LABELS = {
     "BOOM1000": "Boom 1000 Index",
     "CRASH1000": "Crash 1000 Index",
@@ -250,6 +257,7 @@ def start_health_server_if_cloud(radar: "SpikeRadar"):
                 "bb": f"{radar.cfg.get('bb_period', 18)}, {radar.cfg.get('bb_std', 2.0)}",
                 "ntfy_topic_set": bool(topic and topic != "YOUR_PRIVATE_NTFY_TOPIC"),
                 "ws_connected": radar.ws_connected,
+                "ws_url": radar.current_ws_url,
                 "last_error": radar.last_error,
                 "alerts_sent": radar.alerts_sent_count,
                 "last_alert": radar.last_alert_summary,
@@ -285,6 +293,7 @@ class SpikeRadar:
         self.alerts_sent_count = 0
         self.last_alert_summary = "None yet"
         self.ws_connected = False
+        self.current_ws_url = None
         self.last_error = None
 
     def get_live_snapshot(self) -> dict:
@@ -527,8 +536,16 @@ class SpikeRadar:
             ws_url = DERIV_WS_URLS[url_idx % len(DERIV_WS_URLS)]
             url_idx += 1
             try:
+                self.current_ws_url = ws_url
                 log.info(f"Connecting to Deriv Live WebSocket ({ws_url})...")
-                async with websockets.connect(ws_url, ping_interval=25, ping_timeout=15) as ws:
+                async with websockets.connect(
+                    ws_url,
+                    origin=BROWSER_ORIGIN,
+                    user_agent_header=BROWSER_UA,
+                    open_timeout=15,
+                    ping_interval=25,
+                    ping_timeout=15,
+                ) as ws:
                     self.ws_connected = True
                     self.last_error = None
                     backoff = 3
