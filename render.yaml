@@ -2,6 +2,7 @@ services:
   - type: web
     name: boom-crash-spike-radar
     runtime: python
+    region: singapore
     plan: free
     buildCommand: pip install -r requirements_radar.txt
     startCommand: python -u spike_radar.py
