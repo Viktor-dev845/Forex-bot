@@ -249,10 +249,48 @@ def start_health_server_if_cloud(radar: "SpikeRadar"):
             self.end_headers()
 
         def do_GET(self):
+            if self.path == "/diag":
+                out = {"render_region": os.environ.get("RENDER_REGION", "unknown"), "probes": []}
+                try:
+                    geo = requests.get("https://ipinfo.io/json", timeout=6).json()
+                    out["ip_country"] = geo.get("country")
+                    out["ip_region"] = geo.get("region")
+                    out["ip_org"] = geo.get("org")
+                except Exception as e:
+                    out["geo_err"] = str(e)
+                for test_url in [
+                    "https://ws.derivws.com/websockets/v3?app_id=1089",
+                    "https://ws.derivws.com/websockets/v3?app_id=36544",
+                    "https://api.derivws.com/v1/health",
+                ]:
+                    try:
+                        r = requests.get(
+                            test_url,
+                            headers={"User-Agent": BROWSER_UA, "Origin": "https://app.deriv.com"},
+                            timeout=8,
+                        )
+                        out["probes"].append({
+                            "url": test_url,
+                            "status": r.status_code,
+                            "cf_ray": r.headers.get("cf-ray"),
+                            "server": r.headers.get("server"),
+                            "body": r.text[:250],
+                        })
+                    except Exception as e:
+                        out["probes"].append({"url": test_url, "err": str(e)})
+                body = json.dumps(out, indent=2).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+
             topic = radar.cfg.get("ntfy_topic", "")
             payload = {
                 "status": "ALIVE",
                 "started_at": started_at,
+                "render_region": os.environ.get("RENDER_REGION", "unknown"),
                 "timeframe": radar.cfg.get("timeframe", "M5"),
                 "bb": f"{radar.cfg.get('bb_period', 18)}, {radar.cfg.get('bb_std', 2.0)}",
                 "ntfy_topic_set": bool(topic and topic != "YOUR_PRIVATE_NTFY_TOPIC"),
