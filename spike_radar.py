@@ -1,28 +1,27 @@
 """
-Boom 1000 & Crash 1000 Real-Time Spike Radar (Phone + Laptop, Cloud-Ready)
-==========================================================================
-Streams live 1-minute candles directly from Deriv's public WebSocket API
-(ZERO MetaTrader 5 dependency -> runs on Windows laptop AND 24/7 in free Linux cloud!).
+Boom 1000 & Crash 1000 Real-Time Spike Radar (Phone + Laptop, 24/7 Cloud-Ready)
+===============================================================================
+Streams live M5 candles from MetaTrader 5 (locally on Windows) or Deriv's
+public WebSocket API (24/7 on free Linux cloud such as Render.com).
 
-Alert Logic (Smart Filter):
+Alert Logic (Matches Phone Chart: M5 + Bollinger Bands 18, 2.0 + RSI 14):
   1. BOOM 1000 (BOOM1000):
-     - Live upward spike >= boom_min_spike_pts (default 3.0 pts)
-     - Price convincingly pierces Upper Bollinger Band(20, 2.0)
-     - Live RSI(14) >= 67.0
+     - Live upward spike >= boom_min_spike_pts (default 5.0 pts)
+     - Price convincingly pierces Upper Bollinger Band(18, 2.0) by >= 2.0 pts
+     - Live M5 RSI(14) >= 67.0 (exact MT5 SMMA Wilder formula)
      -> Fires INSTANT Phone (`ntfy`) + Laptop (Beep + Windows Notification) alert (<1s)!
-     -> Also monitors the next closed M1 candle and sends a "COOLDOWN COMPLETE" follow-up
-        alert if 1 clean red drift candle closes with zero secondary spike.
+     -> Sends a "COOLDOWN DONE" follow-up if price drifts cleanly red for 60s with zero follow-up spike.
 
   2. CRASH 1000 (CRASH1000):
-     - Live downward crash >= crash_min_spike_pts (default 1.5 pts)
-     - Price convincingly pierces Lower Bollinger Band(20, 2.0)
-     - Live RSI(14) <= 33.0
-     -> Fires INSTANT Phone (`ntfy`) + Laptop alert (<1s) + Cooldown Complete follow-up!
+     - Live downward crash >= crash_min_spike_pts (default 2.5 pts)
+     - Price convincingly pierces Lower Bollinger Band(18, 2.0) by >= 1.0 pt
+     - Live M5 RSI(14) <= 33.0 (exact MT5 SMMA Wilder formula)
+     -> Fires INSTANT Phone (`ntfy`) + Laptop alert (<1s) + 60s Cooldown Done follow-up!
 
 Usage:
   python spike_radar.py          # Start live 24/7 Spike Radar
   python spike_radar.py --test   # Send an instant test alert to your phone & laptop
-  python spike_radar.py --smoke  # Connect to Deriv live feed, verify indicators & exit
+  python spike_radar.py --smoke  # Connect to live feed, verify indicators & exit
 """
 
 import asyncio
@@ -67,15 +66,19 @@ MT5_SYMBOL_MAP = {
 
 def load_radar_config() -> dict:
     defaults = {
+        "timeframe": "M5",
         "ntfy_topic": "YOUR_PRIVATE_NTFY_TOPIC",
         "ntfy_server": "https://ntfy.sh",
         "boom_rsi_min": 67.0,
         "crash_rsi_max": 33.0,
-        "boom_min_spike_pts": 3.0,
-        "crash_min_spike_pts": 1.5,
-        "bb_period": 20,
+        "boom_min_spike_pts": 5.0,
+        "crash_min_spike_pts": 2.5,
+        "boom_bb_min_pierce_pts": 2.0,
+        "crash_bb_min_pierce_pts": 1.0,
+        "bb_period": 18,
         "bb_std": 2.0,
         "rsi_period": 14,
+        "cooldown_seconds": 60,
         "alert_on_cooldown_ready": True,
         "laptop_sound": True,
         "laptop_popup": True,
@@ -90,47 +93,57 @@ def load_radar_config() -> dict:
             log.warning(f"Could not read config.json ({e}); using defaults.")
 
     # Environment variable overrides for 24/7 Cloud Hosting (Render / Koyeb / Railway / Fly.io)
+    if os.environ.get("RADAR_TIMEFRAME"):
+        defaults["timeframe"] = os.environ["RADAR_TIMEFRAME"].strip().upper()
     if os.environ.get("NTFY_TOPIC"):
         defaults["ntfy_topic"] = os.environ["NTFY_TOPIC"].strip()
     if os.environ.get("NTFY_SERVER"):
         defaults["ntfy_server"] = os.environ["NTFY_SERVER"].strip().rstrip("/")
+    if os.environ.get("BB_PERIOD"):
+        defaults["bb_period"] = int(os.environ["BB_PERIOD"])
+    if os.environ.get("BB_STD"):
+        defaults["bb_std"] = float(os.environ["BB_STD"])
     if os.environ.get("BOOM_RSI_MIN"):
         defaults["boom_rsi_min"] = float(os.environ["BOOM_RSI_MIN"])
     if os.environ.get("CRASH_RSI_MAX"):
         defaults["crash_rsi_max"] = float(os.environ["CRASH_RSI_MAX"])
+    if os.environ.get("BOOM_BB_MIN_PIERCE"):
+        defaults["boom_bb_min_pierce_pts"] = float(os.environ["BOOM_BB_MIN_PIERCE"])
+    if os.environ.get("CRASH_BB_MIN_PIERCE"):
+        defaults["crash_bb_min_pierce_pts"] = float(os.environ["CRASH_BB_MIN_PIERCE"])
     return defaults
 
 
+def get_timeframe_granularity(tf: str) -> int:
+    return {"M1": 60, "M5": 300, "M15": 900, "H1": 3600}.get(tf.upper(), 300)
+
+
 # ------------------------------------------------------------------
-# Pure-Python Indicators (zero pandas/numpy required -> tiny cloud footprint!)
+# Pure-Python Indicators (exact MT5 Bollinger ddof=0 & exact MT5 SMMA RSI)
 # ------------------------------------------------------------------
-def compute_bollinger(closes: List[float], period: int = 20, num_std: float = 2.0) -> Tuple[Optional[float], Optional[float], Optional[float]]:
+def compute_bollinger(closes: List[float], period: int = 18, num_std: float = 2.0) -> Tuple[Optional[float], Optional[float], Optional[float]]:
     if len(closes) < period:
         return None, None, None
     window = closes[-period:]
     mean = sum(window) / period
-    # Sample std (ddof=1) to match standard MT5 / pandas Bollinger Bands
-    var = sum((x - mean) ** 2 for x in window) / max(1, period - 1)
+    # Population std (ddof=0) matches MetaTrader 5 built-in Bollinger Bands exactly
+    var = sum((x - mean) ** 2 for x in window) / period
     sd = math.sqrt(var)
     return mean + num_std * sd, mean, mean - num_std * sd
 
 
 def compute_rsi_wilder(closes: List[float], period: int = 14) -> Optional[float]:
+    """Exact MetaTrader 5 built-in RSI (first N-bar SMA seed + Wilder SMMA)."""
     if len(closes) < period + 2:
         return None
-    alpha = 1.0 / period
-    avg_gain = 0.0
-    avg_loss = 0.0
-    for i in range(1, len(closes)):
-        delta = closes[i] - closes[i - 1]
-        gain = delta if delta > 0 else 0.0
-        loss = -delta if delta < 0 else 0.0
-        if i == 1:
-            avg_gain = gain
-            avg_loss = loss
-        else:
-            avg_gain = alpha * gain + (1.0 - alpha) * avg_gain
-            avg_loss = alpha * loss + (1.0 - alpha) * avg_loss
+    diffs = [closes[i] - closes[i - 1] for i in range(1, len(closes))]
+    gains = [d if d > 0 else 0.0 for d in diffs]
+    losses = [-d if d < 0 else 0.0 for d in diffs]
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+    for i in range(period, len(diffs)):
+        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
     if avg_loss == 0.0:
         return 100.0
     rs = avg_gain / avg_loss
@@ -223,11 +236,21 @@ def start_health_server_if_cloud(radar: "SpikeRadar"):
     started_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     class _HealthHandler(BaseHTTPRequestHandler):
+        def do_HEAD(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+
         def do_GET(self):
+            topic = radar.cfg.get("ntfy_topic", "")
             payload = {
                 "status": "ALIVE",
                 "started_at": started_at,
-                "ntfy_topic_set": bool(radar.cfg.get("ntfy_topic")),
+                "timeframe": radar.cfg.get("timeframe", "M5"),
+                "bb": f"{radar.cfg.get('bb_period', 18)}, {radar.cfg.get('bb_std', 2.0)}",
+                "ntfy_topic_set": bool(topic and topic != "YOUR_PRIVATE_NTFY_TOPIC"),
+                "ws_connected": radar.ws_connected,
+                "last_error": radar.last_error,
                 "alerts_sent": radar.alerts_sent_count,
                 "last_alert": radar.last_alert_summary,
                 "live": radar.get_live_snapshot(),
@@ -261,6 +284,8 @@ class SpikeRadar:
         self._last_heartbeat = 0.0
         self.alerts_sent_count = 0
         self.last_alert_summary = "None yet"
+        self.ws_connected = False
+        self.last_error = None
 
     def get_live_snapshot(self) -> dict:
         snap = {}
@@ -293,47 +318,51 @@ class SpikeRadar:
                 del buf[:-120]
         return closed_prev
 
-    def _check_cooldown_complete(self, sym: str, closed_bar: dict):
-        """If a qualified spike happened 1 minute ago, notify when the 1st clean cooldown candle closes."""
+    def _check_cooldown_timer(self, sym: str):
+        """60s after a qualified spike alert, confirm price drifted cleanly with NO secondary spike."""
         if not self.cfg.get("alert_on_cooldown_ready", True):
             return
         pending = self.pending_cooldown.get(sym)
         if not pending:
             return
-        # Only evaluate the candle immediately AFTER the spike candle
-        if closed_bar["epoch"] <= pending["spike_epoch"]:
+        cool_secs = float(self.cfg.get("cooldown_seconds", 60))
+        if time.time() - pending["alert_ts"] < cool_secs:
             return
-        # Clear pending regardless (cooldown window is strictly the 1 candle after spike)
+        buf = self.candles.get(sym, [])
+        if not buf:
+            return
+        live = buf[-1]
         self.pending_cooldown[sym] = None
         is_boom = sym == "BOOM1000"
-        body = (closed_bar["close"] - closed_bar["open"]) if is_boom else (closed_bar["open"] - closed_bar["close"])
-        min_sp = self.cfg["boom_min_spike_pts"] if is_boom else self.cfg["crash_min_spike_pts"]
-        # Did a secondary spike ruin the cooldown?
-        if body >= min_sp:
-            log.info(f"[{sym}] Secondary spike during cooldown (+{body:.1f} pts) - cancelled cooldown-ready ping.")
+        curr_p = live["close"]
+        # Cancel cooldown ping if a secondary spike pushed beyond the original spike extreme
+        if is_boom and (live["high"] > pending["spike_extreme"] + 1.0 or curr_p >= pending["spike_price"] - 0.25):
+            log.info(f"[{sym}] Cooldown cancelled (secondary spike or no clean red drift after {int(cool_secs)}s).")
             return
-        # Did Candle 1 close cleanly in the drift direction?
-        clean_drift = (closed_bar["open"] - closed_bar["close"] > 0.05) if is_boom else (closed_bar["close"] - closed_bar["open"] > 0.05)
-        if clean_drift:
-            label = SYMBOL_LABELS[sym]
-            drift_pts = abs(closed_bar["close"] - closed_bar["open"])
-            self.alerts_sent_count += 1
-            self.last_alert_summary = f"{datetime.now(timezone.utc).strftime('%H:%M:%S UTC')} {label} COOLDOWN DONE ({drift_pts:.2f}pts)"
-            self.alerts.send(
-                title=f"{label} COOLDOWN DONE [OK]",
-                message=(
-                    f"1 clean {'RED' if is_boom else 'GREEN'} cooldown candle closed ({drift_pts:.2f} pts) "
-                    f"after {pending['spike_pts']:.1f}pt spike! Price: {closed_bar['close']:.2f} - Check chart now."
-                ),
-                priority="default",
-                tags="white_check_mark",
-                is_boom=is_boom,
-            )
+        if (not is_boom) and (live["low"] < pending["spike_extreme"] - 0.5 or curr_p <= pending["spike_price"] + 0.12):
+            log.info(f"[{sym}] Cooldown cancelled (secondary crash or no clean green drift after {int(cool_secs)}s).")
+            return
+
+        label = SYMBOL_LABELS[sym]
+        drift_pts = abs(curr_p - pending["spike_price"])
+        self.alerts_sent_count += 1
+        self.last_alert_summary = f"{datetime.now(timezone.utc).strftime('%H:%M:%S UTC')} {label} COOLDOWN DONE ({drift_pts:.2f}pts)"
+        self.alerts.send(
+            title=f"{label} COOLDOWN DONE [OK]",
+            message=(
+                f"{int(cool_secs)}s clean {'RED' if is_boom else 'GREEN'} cooldown confirmed ({drift_pts:.2f} pts drift, "
+                f"no follow-up spike) after {pending['spike_pts']:.1f}pt spike! Price: {curr_p:.2f}"
+            ),
+            priority="default",
+            tags="white_check_mark",
+            is_boom=is_boom,
+        )
 
     def _evaluate_live(self, sym: str):
         buf = self.candles[sym]
-        if len(buf) < 25:
+        if len(buf) < max(25, self.cfg["bb_period"] + 5):
             return
+        self._check_cooldown_timer(sym)
         live = buf[-1]
         closes = [b["close"] for b in buf]
         up_bb, mid_bb, lo_bb = compute_bollinger(closes, self.cfg["bb_period"], self.cfg["bb_std"])
@@ -341,40 +370,49 @@ class SpikeRadar:
         if up_bb is None or rsi_val is None:
             return
 
+        tf_lbl = self.cfg.get("timeframe", "M5")
         is_boom = sym == "BOOM1000"
         if is_boom:
-            spike_pts = live["close"] - live["open"]
+            # Measure true upward spike impulse inside the live candle (works even if M5 drifted down before spiking!)
+            spike_pts = live["close"] - live["low"]
+            bb_pierce = live["close"] - up_bb
+            min_pierce = float(self.cfg.get("boom_bb_min_pierce_pts", 2.0))
             triggered = (
                 spike_pts >= self.cfg["boom_min_spike_pts"]
-                and live["close"] > up_bb
+                and bb_pierce >= min_pierce
                 and rsi_val >= self.cfg["boom_rsi_min"]
             )
         else:
-            spike_pts = live["open"] - live["close"]
+            spike_pts = live["high"] - live["close"]
+            bb_pierce = lo_bb - live["close"]
+            min_pierce = float(self.cfg.get("crash_bb_min_pierce_pts", 1.0))
             triggered = (
                 spike_pts >= self.cfg["crash_min_spike_pts"]
-                and live["close"] < lo_bb
+                and bb_pierce >= min_pierce
                 and rsi_val <= self.cfg["crash_rsi_max"]
             )
 
-        # Deduplicate: max 1 spike alert per M1 candle
-        if triggered and self.alerted_epochs.get(sym) != live["epoch"]:
+        # Deduplicate: max 1 spike alert per candle (or allow re-alert only if a brand-new bigger spike hits >45s later)
+        last_ep = self.alerted_epochs.get(sym)
+        if triggered and last_ep != live["epoch"]:
             self.alerted_epochs[sym] = live["epoch"]
             label = SYMBOL_LABELS[sym]
             bb_lvl = up_bb if is_boom else lo_bb
             self.pending_cooldown[sym] = {
                 "spike_epoch": live["epoch"],
                 "spike_extreme": live["high"] if is_boom else live["low"],
+                "spike_price": live["close"],
                 "spike_pts": spike_pts,
+                "alert_ts": time.time(),
             }
             self.alerts_sent_count += 1
-            self.last_alert_summary = f"{datetime.now(timezone.utc).strftime('%H:%M:%S UTC')} {label} {'+' if is_boom else '-'}{spike_pts:.1f}pts RSI={rsi_val:.1f}"
+            self.last_alert_summary = f"{datetime.now(timezone.utc).strftime('%H:%M:%S UTC')} {label} [{tf_lbl}] {'+' if is_boom else '-'}{spike_pts:.1f}pts BB+{bb_pierce:.1f} RSI={rsi_val:.1f}"
             self.alerts.send(
-                title=f"{'BOOM' if is_boom else 'CRASH'} 1000 SPIKE ALERT!",
+                title=f"{'BOOM' if is_boom else 'CRASH'} 1000 [{tf_lbl}] SPIKE ALERT!",
                 message=(
-                    f"{label}: {'+' if is_boom else '-'}{spike_pts:.1f} pts spike @ {live['close']:.2f}\n"
-                    f"RSI(14): {rsi_val:.1f} | Pierced {'Upper' if is_boom else 'Lower'} BB ({bb_lvl:.2f}) [OK]\n"
-                    f"Wait for 1 clean {'RED' if is_boom else 'GREEN'} cooldown candle before acting."
+                    f"{label} ({tf_lbl}): {'+' if is_boom else '-'}{spike_pts:.1f} pts spike @ {live['close']:.2f}\n"
+                    f"{tf_lbl} RSI({self.cfg['rsi_period']}): {rsi_val:.1f} | Pierced {'Upper' if is_boom else 'Lower'} BB({self.cfg['bb_period']},{self.cfg['bb_std']:.1f}) @ {bb_lvl:.2f} by +{bb_pierce:.1f} pts [OK]\n"
+                    f"Wait for 1m clean {'RED' if is_boom else 'GREEN'} cooldown before acting."
                 ),
                 priority="high",
                 tags="rotating_light,chart_with_upwards_trend" if is_boom else "rotating_light,chart_with_downwards_trend",
@@ -430,16 +468,25 @@ class SpikeRadar:
         for code, mt5_sym in MT5_SYMBOL_MAP.items():
             mt5.symbol_select(mt5_sym, True)
 
+        tf_str = self.cfg.get("timeframe", "M5").upper()
+        mt5_tf_map = {
+            "M1": mt5.TIMEFRAME_M1,
+            "M5": mt5.TIMEFRAME_M5,
+            "M15": mt5.TIMEFRAME_M15,
+            "H1": mt5.TIMEFRAME_H1,
+        }
+        mt5_tf = mt5_tf_map.get(tf_str, mt5.TIMEFRAME_M5)
+
         log.info(
-            f"[READY - MT5 LIVE FEED] Watching Boom 1000 (Upper BB + RSI>={self.cfg['boom_rsi_min']}) & "
-            f"Crash 1000 (Lower BB + RSI<={self.cfg['crash_rsi_max']}) every 1s -> ntfy '{self.cfg['ntfy_topic']}'"
+            f"[READY - MT5 LIVE {tf_str}] Watching Boom 1000 (Upper BB({self.cfg['bb_period']},{self.cfg['bb_std']}) + RSI>={self.cfg['boom_rsi_min']}) & "
+            f"Crash 1000 (Lower BB({self.cfg['bb_period']},{self.cfg['bb_std']}) + RSI<={self.cfg['crash_rsi_max']}) every 1s -> ntfy '{self.cfg['ntfy_topic']}'"
         )
 
         initialized_syms = set()
         try:
             while True:
                 for code, mt5_sym in MT5_SYMBOL_MAP.items():
-                    rates = mt5.copy_rates_from_pos(mt5_sym, mt5.TIMEFRAME_M1, 0, 60)
+                    rates = mt5.copy_rates_from_pos(mt5_sym, mt5_tf, 0, 120)
                     if rates is None or len(rates) < 25:
                         continue
                     bars = [
@@ -458,16 +505,13 @@ class SpikeRadar:
                         if len(initialized_syms) == 2:
                             self._log_status_line()
                             if smoke_only:
-                                log.info("[SMOKE TEST PASSED] Live MT5 stream & BB/RSI indicators verified!")
+                                log.info(f"[SMOKE TEST PASSED] Live MT5 {tf_str} stream & BB({self.cfg['bb_period']},{self.cfg['bb_std']})/RSI verified!")
                                 return True
                     else:
                         prev_epoch = self.candles[code][-1]["epoch"]
                         live_bar = bars[-1]
                         if live_bar["epoch"] > prev_epoch:
-                            # Just rolled into a new M1 candle -> evaluate the just-closed bar for cooldown completion
-                            closed_prev = bars[-2]
                             self.candles[code] = bars
-                            self._check_cooldown_complete(code, closed_prev)
                         else:
                             self.candles[code][-1] = live_bar
                         self._evaluate_live(code)
@@ -485,28 +529,34 @@ class SpikeRadar:
             try:
                 log.info(f"Connecting to Deriv Live WebSocket ({ws_url})...")
                 async with websockets.connect(ws_url, ping_interval=25, ping_timeout=15) as ws:
+                    self.ws_connected = True
+                    self.last_error = None
                     backoff = 3
+                    tf_str = self.cfg.get("timeframe", "M5").upper()
+                    gran = get_timeframe_granularity(tf_str)
                     for sym in ("BOOM1000", "CRASH1000"):
                         req = {
                             "ticks_history": sym,
                             "adjust_start_time": 1,
-                            "count": 60,
+                            "count": 120,
                             "end": "latest",
-                            "granularity": 60,
+                            "granularity": gran,
                             "style": "candles",
                             "subscribe": 1,
                         }
                         await ws.send(json.dumps(req))
                     log.info(
-                        f"[READY] Watching BOOM1000 (Upper BB + RSI>={self.cfg['boom_rsi_min']}) & "
-                        f"CRASH1000 (Lower BB + RSI<={self.cfg['crash_rsi_max']}) -> ntfy topic '{self.cfg['ntfy_topic']}'"
+                        f"[READY - CLOUD WS {tf_str}] Watching BOOM1000 (Upper BB({self.cfg['bb_period']},{self.cfg['bb_std']}) + RSI>={self.cfg['boom_rsi_min']}) & "
+                        f"CRASH1000 (Lower BB({self.cfg['bb_period']},{self.cfg['bb_std']}) + RSI<={self.cfg['crash_rsi_max']}) -> ntfy '{self.cfg['ntfy_topic']}'"
                     )
 
                     got_history = set()
                     async for raw in ws:
                         data = json.loads(raw)
                         if "error" in data:
-                            log.error(f"Deriv WS Error: {data['error'].get('message')}")
+                            err_msg = data["error"].get("message", "Unknown WS error")
+                            self.last_error = err_msg
+                            log.error(f"Deriv WS Error: {err_msg}")
                             continue
 
                         msg_type = data.get("msg_type")
@@ -541,15 +591,15 @@ class SpikeRadar:
                                     "low": float(ohlc["low"]),
                                     "close": float(ohlc["close"]),
                                 }
-                                closed_prev = self._upsert_candle(sym, bar)
-                                if closed_prev is not None:
-                                    self._check_cooldown_complete(sym, closed_prev)
+                                self._upsert_candle(sym, bar)
                                 self._evaluate_live(sym)
 
             except KeyboardInterrupt:
                 log.info("Spike Radar stopped by user.")
                 return
             except Exception as e:
+                self.ws_connected = False
+                self.last_error = str(e)
                 log.warning(f"WebSocket disconnected ({e}). Reconnecting in {backoff}s...")
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 30)

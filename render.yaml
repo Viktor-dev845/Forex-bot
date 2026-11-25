@@ -9,9 +9,19 @@ services:
     envVars:
       - key: NTFY_TOPIC
         sync: false
+      - key: RADAR_TIMEFRAME
+        value: M5
+      - key: BB_PERIOD
+        value: "18"
+      - key: BB_STD
+        value: "2.0"
       - key: BOOM_RSI_MIN
         value: "67.0"
       - key: CRASH_RSI_MAX
         value: "33.0"
+      - key: BOOM_BB_MIN_PIERCE
+        value: "2.0"
+      - key: CRASH_BB_MIN_PIERCE
+        value: "1.0"
       - key: RADAR_SOURCE
         value: ws
